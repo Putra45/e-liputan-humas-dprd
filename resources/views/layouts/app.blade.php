@@ -16,7 +16,9 @@
     </script>
 
     <!-- Tailwind CSS (Vite build + CDN fallback for guarantee) -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if (file_exists(public_path('build/manifest.json')))
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @endif
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
