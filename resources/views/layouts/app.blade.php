@@ -6,11 +6,21 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'E-Liputan Humas DPRD Kota Tangerang')</title>
 
+    <!-- Dark Mode Initial Script -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
     <!-- Tailwind CSS (Vite build + CDN fallback for guarantee) -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
+            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
@@ -79,9 +89,26 @@
         .fc-event:hover {
             transform: scale(1.02);
         }
+        /* Dark Mode Calendar adjustments */
+        .dark .fc-theme-standard td, .dark .fc-theme-standard th {
+            border-color: #334155 !important;
+        }
+        .dark .fc-toolbar-title {
+            color: #f1f5f9 !important;
+        }
+        .dark .fc-col-header-cell-cushion, .dark .fc-daygrid-day-number {
+            color: #cbd5e1 !important;
+        }
+        .dark .fc-day-today {
+            background-color: rgba(30, 58, 138, 0.25) !important;
+        }
+        .dark .fc-list-day-cushion {
+            background-color: #1e293b !important;
+            color: #f8fafc !important;
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased min-h-screen flex flex-col transition-colors duration-200">
 
     <!-- Top Navigation Bar -->
     <header class="bg-[#0f2e5a] text-white shadow-md border-b-4 border-amber-500 sticky top-0 z-40">
@@ -104,6 +131,18 @@
 
                 <!-- Nav Links -->
                 <nav class="flex items-center gap-2 sm:gap-4">
+                    <!-- Theme Toggle Button -->
+                    <button type="button" id="theme-toggle" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-amber-300 border border-white/20 transition" title="Ganti Mode Gelap / Terang">
+                        <!-- Sun icon (shown when dark) -->
+                        <svg id="theme-toggle-light-icon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <!-- Moon icon (shown when light) -->
+                        <svg id="theme-toggle-dark-icon" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                        </svg>
+                    </button>
+
                     <a href="{{ route('portal.index') }}" class="px-3 py-2 rounded-lg text-sm font-medium transition {{ request()->routeIs('portal.*') ? 'bg-white/20 text-white font-semibold' : 'text-slate-200 hover:bg-white/10 hover:text-white' }}">
                         Portal Dewan
                     </a>
@@ -149,6 +188,36 @@
         </div>
     </footer>
 
+    <script>
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        function updateToggleIcons() {
+            if (document.documentElement.classList.contains('dark')) {
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+            } else {
+                themeToggleLightIcon.classList.add('hidden');
+                themeToggleDarkIcon.classList.remove('hidden');
+            }
+        }
+
+        updateToggleIcons();
+
+        if (themeToggleBtn) {
+            themeToggleBtn.addEventListener('click', function() {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+                updateToggleIcons();
+            });
+        }
+    </script>
     @stack('scripts')
 </body>
 </html>

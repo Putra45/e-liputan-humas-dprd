@@ -79,24 +79,24 @@
 
         <!-- Left Column: Interactive Calendar (7 Cols on LG) -->
         <div id="calendar-section" class="lg:col-span-7 space-y-4">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="p-5 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between flex-wrap gap-3">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <div class="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/50 flex items-center justify-between flex-wrap gap-3">
                     <div>
-                        <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
                             <span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span>
                             Kalender Agenda Liputan Humas
                         </h2>
-                        <p class="text-xs text-slate-500 mt-0.5">Klik jadwal pada tanggal untuk melihat rincian kegiatan.</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Klik jadwal pada tanggal untuk melihat rincian kegiatan.</p>
                     </div>
                     <!-- Legend -->
                     <div class="flex items-center gap-3 text-xs">
                         <div class="flex items-center gap-1.5">
                             <span class="w-3 h-3 rounded bg-[#0f2e5a]"></span>
-                            <span class="text-slate-600 font-medium">Disetujui (ACC)</span>
+                            <span class="text-slate-600 dark:text-slate-300 font-medium">Disetujui (ACC)</span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <span class="w-3 h-3 rounded bg-amber-500"></span>
-                            <span class="text-slate-600 font-medium">Pending</span>
+                            <span class="text-slate-600 dark:text-slate-300 font-medium">Pending</span>
                         </div>
                     </div>
                 </div>
@@ -107,8 +107,8 @@
             </div>
 
             <!-- Transparency Info Card -->
-            <div class="bg-blue-50/60 rounded-xl p-4 border border-blue-100 flex items-start gap-3 text-xs text-blue-900">
-                <svg class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="bg-blue-50/60 dark:bg-blue-950/30 rounded-xl p-4 border border-blue-100 dark:border-blue-900/50 flex items-start gap-3 text-xs text-blue-900 dark:text-blue-200">
+                <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
                 <div>
@@ -119,15 +119,15 @@
 
         <!-- Right Column: Booking Form (5 Cols on LG) -->
         <div id="form-section" class="lg:col-span-5">
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden sticky top-24">
-                <div class="p-5 border-b border-slate-100 bg-slate-50/80">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden sticky top-24">
+                <div class="p-5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/50">
                     <div class="flex items-center gap-2.5">
                         <div class="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
                             📝
                         </div>
                         <div>
-                            <h2 class="text-lg font-bold text-slate-900">Form Pengajuan Liputan</h2>
-                            <p class="text-xs text-slate-500">Isi data lengkap sesuai format permohonan resmi.</p>
+                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Form Pengajuan Liputan</h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Isi data lengkap sesuai format permohonan resmi.</p>
                         </div>
                     </div>
                 </div>
@@ -136,7 +136,7 @@
                     @csrf
 
                     @if ($errors->any())
-                    <div class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs space-y-1">
+                    <div class="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-800 dark:text-rose-200 text-xs space-y-1">
                         <div class="font-bold flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             Terdapat kesalahan pengisian:
@@ -151,20 +151,20 @@
 
                     <!-- Nama Kegiatan -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                             Nama Kegiatan <span class="text-rose-500">*</span>
                         </label>
-                        <input type="text" name="nama_kegiatan" value="{{ old('nama_kegiatan') }}" required placeholder="Contoh: Rapat Dengar Pendapat / Kunjungan Kerja" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-sm transition placeholder:text-slate-400">
+                        <input type="text" name="nama_kegiatan" value="{{ old('nama_kegiatan') }}" required placeholder="Contoh: Rapat Dengar Pendapat / Kunjungan Kerja" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 text-sm transition placeholder:text-slate-400 dark:placeholder:text-slate-500">
                     </div>
 
                     <!-- Kategori (Radio) -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                             Kategori <span class="text-rose-500">*</span>
                         </label>
                         <div class="grid grid-cols-2 gap-2 text-xs">
                             @foreach($kategoriList as $kat)
-                            <label class="flex items-center gap-2 p-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/50 has-[:checked]:text-blue-900 font-medium">
+                            <label class="flex items-center gap-2 p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/50 dark:has-[:checked]:bg-blue-950/40 has-[:checked]:text-blue-900 dark:has-[:checked]:text-blue-200 text-slate-800 dark:text-slate-200 font-medium">
                                 <input type="radio" name="kategori" value="{{ $kat }}" {{ old('kategori') === $kat ? 'checked' : ($loop->first && !old('kategori') ? 'checked' : '') }} class="text-blue-600 focus:ring-blue-500">
                                 <span>{{ $kat }}</span>
                             </label>
@@ -175,21 +175,21 @@
                     <!-- Tanggal & Jam -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                                 Tanggal Kegiatan <span class="text-rose-500">*</span>
                             </label>
-                            <input type="date" name="tanggal_kegiatan" id="tanggal_kegiatan" value="{{ old('tanggal_kegiatan') }}" required min="{{ date('Y-m-d') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-sm transition">
+                            <input type="date" name="tanggal_kegiatan" id="tanggal_kegiatan" value="{{ old('tanggal_kegiatan') }}" required min="{{ date('Y-m-d') }}" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 text-sm transition">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                                 Waktu Mulai <span class="text-rose-500">*</span>
                             </label>
-                            <input type="time" name="waktu_mulai" value="{{ old('waktu_mulai', '09:00') }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-sm transition">
+                            <input type="time" name="waktu_mulai" value="{{ old('waktu_mulai', '09:00') }}" required class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 dark:focus:ring-blue-900/40 text-sm transition">
                         </div>
                     </div>
 
                     <!-- H-1 Warning Indicator -->
-                    <div id="h1-warning" class="hidden p-3 bg-amber-50 border border-amber-300 rounded-xl text-amber-900 text-xs flex items-start gap-2">
+                    <div id="h1-warning" class="hidden p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2">
                         <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         <div>
                             <strong>Peringatan Pemesanan Hari H:</strong> Standar order adalah minimal H-1. Permohonan di hari H tetap kami teruskan dan akan diprioritaskan untuk kegiatan resmi DPRD.
@@ -198,12 +198,12 @@
 
                     <!-- Jenis Publikasi (Radio) -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
                             Jenis Publikasi <span class="text-rose-500">*</span>
                         </label>
                         <div class="space-y-2 text-xs">
                             @foreach($jenisPublikasiList as $jp)
-                            <label class="flex items-start gap-2.5 p-2.5 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/50 has-[:checked]:text-blue-900 font-medium">
+                            <label class="flex items-start gap-2.5 p-2.5 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50/50 dark:has-[:checked]:bg-blue-950/40 has-[:checked]:text-blue-900 dark:has-[:checked]:text-blue-200 text-slate-800 dark:text-slate-200 font-medium">
                                 <input type="radio" name="jenis_publikasi" value="{{ $jp }}" {{ old('jenis_publikasi') === $jp ? 'checked' : ($loop->first && !old('jenis_publikasi') ? 'checked' : '') }} class="mt-0.5 text-blue-600 focus:ring-blue-500">
                                 <span>{{ $jp }}</span>
                             </label>
@@ -212,25 +212,25 @@
                     </div>
 
                     <!-- Identitas Pemohon -->
-                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
-                        <div class="text-xs font-bold text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+                        <div class="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                             Data Pemohon & Kontak
                         </div>
 
                         <div>
-                            <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                            <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
                                 Nama Pemohon / Anggota Dewan <span class="text-rose-500">*</span>
                             </label>
-                            <input type="text" name="nama_pemohon" value="{{ old('nama_pemohon') }}" required placeholder="Contoh: H. Rusdi Alam / Staf Pendamping" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-xs transition">
+                            <input type="text" name="nama_pemohon" value="{{ old('nama_pemohon') }}" required placeholder="Contoh: H. Rusdi Alam / Staf Pendamping" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-xs transition">
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <div>
-                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
                                     Fraksi <span class="text-rose-500">*</span>
                                 </label>
-                                <select name="fraksi" required class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-xs transition bg-white">
+                                <select name="fraksi" required class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-xs transition">
                                     <option value="">-- Pilih Fraksi --</option>
                                     @foreach($fraksiList as $f)
                                         <option value="{{ $f }}" {{ old('fraksi') === $f ? 'selected' : '' }}>{{ $f }}</option>
@@ -239,21 +239,21 @@
                             </div>
 
                             <div>
-                                <label class="block text-[11px] font-semibold text-slate-600 mb-1">
+                                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
                                     No. WhatsApp Aktif <span class="text-rose-500">*</span>
                                 </label>
-                                <input type="text" name="no_whatsapp" value="{{ old('no_whatsapp') }}" required placeholder="0812xxxxxxxx" class="w-full px-3 py-2 rounded-lg border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-xs transition">
+                                <input type="text" name="no_whatsapp" value="{{ old('no_whatsapp') }}" required placeholder="0812xxxxxxxx" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-xs transition">
                             </div>
                         </div>
                     </div>
 
                     <!-- Dokumen Kegiatan (Surat / Flyer) -->
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">
                             Dokumen Kegiatan (Surat / Flyer)
                         </label>
-                        <p class="text-[11px] text-slate-500 mb-2">Upload surat tugas, susunan acara, atau flyer (PDF, JPG, PNG, DOCX - Maks 10 MB).</p>
-                        <input type="file" name="file_dokumen" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-slate-200 rounded-xl p-1 bg-white">
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-2">Upload surat tugas, susunan acara, atau flyer (PDF, JPG, PNG, DOCX - Maks 10 MB).</p>
+                        <input type="file" name="file_dokumen" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" class="block w-full text-xs text-slate-500 dark:text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-blue-50 dark:file:bg-blue-950 file:text-blue-700 dark:file:text-blue-300 hover:file:bg-blue-100 cursor-pointer border border-slate-200 dark:border-slate-700 rounded-xl p-1 bg-white dark:bg-slate-800">
                     </div>
 
                     <!-- Submit Button -->
@@ -271,8 +271,8 @@
 </div>
 
 <!-- Modal Pop-up: Detail Event Jadwal (FullCalendar Click) -->
-<div id="eventDetailModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 overflow-hidden transform transition-all">
+<div id="eventDetailModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-lg w-full border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all">
         <div class="bg-[#0f2e5a] text-white px-6 py-4 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
@@ -284,39 +284,39 @@
         </div>
 
         <div class="p-6 space-y-4 text-xs sm:text-sm">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span class="text-slate-500 font-medium">Status Pengajuan</span>
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-500 dark:text-slate-400 font-medium">Status Pengajuan</span>
                 <span id="modal-status" class="px-2.5 py-0.5 rounded-full text-xs font-semibold"></span>
             </div>
 
             <div>
-                <span class="block text-slate-500 text-xs font-medium mb-0.5">Nama Kegiatan</span>
-                <p id="modal-kegiatan" class="text-slate-900 font-bold text-base leading-snug"></p>
+                <span class="block text-slate-500 dark:text-slate-400 text-xs font-medium mb-0.5">Nama Kegiatan</span>
+                <p id="modal-kegiatan" class="text-slate-900 dark:text-white font-bold text-base leading-snug"></p>
             </div>
 
             <div class="grid grid-cols-2 gap-3 pt-2">
-                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <span class="block text-[11px] text-slate-500 uppercase font-bold">Pemohon (Fraksi)</span>
-                    <p id="modal-pemohon" class="font-semibold text-slate-900 mt-0.5"></p>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <span class="block text-[11px] text-slate-500 dark:text-slate-400 uppercase font-bold">Pemohon (Fraksi)</span>
+                    <p id="modal-pemohon" class="font-semibold text-slate-900 dark:text-white mt-0.5"></p>
                 </div>
-                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
-                    <span class="block text-[11px] text-slate-500 uppercase font-bold">Kategori</span>
-                    <p id="modal-kategori" class="font-semibold text-blue-700 mt-0.5"></p>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700">
+                    <span class="block text-[11px] text-slate-500 dark:text-slate-400 uppercase font-bold">Kategori</span>
+                    <p id="modal-kategori" class="font-semibold text-blue-700 dark:text-blue-400 mt-0.5"></p>
                 </div>
             </div>
 
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 space-y-2">
+            <div class="p-3 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700 space-y-2">
                 <div class="flex justify-between">
-                    <span class="text-slate-500">Waktu Liputan:</span>
-                    <span id="modal-waktu" class="font-bold text-slate-900"></span>
+                    <span class="text-slate-500 dark:text-slate-400">Waktu Liputan:</span>
+                    <span id="modal-waktu" class="font-bold text-slate-900 dark:text-white"></span>
                 </div>
                 <div class="flex justify-between">
-                    <span class="text-slate-500">Jenis Publikasi:</span>
-                    <span id="modal-jenis" class="font-semibold text-slate-800 text-right max-w-[240px]"></span>
+                    <span class="text-slate-500 dark:text-slate-400">Jenis Publikasi:</span>
+                    <span id="modal-jenis" class="font-semibold text-slate-800 dark:text-slate-200 text-right max-w-[240px]"></span>
                 </div>
-                <div class="flex justify-between pt-1 border-t border-slate-200/60">
-                    <span class="text-slate-500">Kode Booking:</span>
-                    <span id="modal-kode" class="font-mono font-bold text-slate-700"></span>
+                <div class="flex justify-between pt-1 border-t border-slate-200/60 dark:border-slate-700">
+                    <span class="text-slate-500 dark:text-slate-400">Kode Booking:</span>
+                    <span id="modal-kode" class="font-mono font-bold text-slate-700 dark:text-slate-300"></span>
                 </div>
             </div>
 
@@ -325,8 +325,13 @@
             </div>
         </div>
 
-        <div class="bg-slate-50 px-6 py-3 border-t border-slate-100 flex justify-end">
-            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl text-xs transition">
+        <div class="bg-slate-50 dark:bg-slate-800/80 px-6 py-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+            <button type="button" onclick="closeModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold rounded-xl text-xs transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+</div>
                 Tutup
             </button>
         </div>

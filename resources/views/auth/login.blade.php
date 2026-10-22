@@ -6,7 +6,7 @@
 <div class="min-h-[75vh] flex items-center justify-center px-4 py-12">
     <div class="max-w-md w-full">
         <!-- Card -->
-        <div class="bg-white rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
             <div class="bg-gradient-to-br from-[#0f2e5a] to-[#0a1d37] p-8 text-white text-center border-b-4 border-amber-500">
                 <div class="w-14 h-14 mx-auto rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 mb-3 shadow-inner">
                     <svg class="w-8 h-8 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
@@ -21,33 +21,54 @@
                 @csrf
 
                 @if($errors->any())
-                <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs">
+                <div class="p-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 rounded-xl text-rose-800 dark:text-rose-300 text-xs">
                     {{ $errors->first() }}
                 </div>
                 @endif
 
                 @if(session('success'))
-                <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs">
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-900 rounded-xl text-emerald-800 dark:text-emerald-300 text-xs">
                     {{ session('success') }}
                 </div>
                 @endif
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                         Alamat Email
                     </label>
-                    <input type="email" name="email" value="{{ old('email', 'admin@dprd-tangerangkota.go.id') }}" required autofocus class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-sm transition">
+                    <input type="email" name="email" value="{{ old('email', 'admin@dprd-tangerangkota.go.id') }}" required autofocus class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-sm transition">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">
                         Kata Sandi
                     </label>
-                    <input type="password" name="password" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-sm transition">
+                    <input type="password" name="password" required placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:border-blue-600 focus:ring-2 focus:ring-blue-100 text-sm transition">
                 </div>
 
                 <div class="flex items-center justify-between text-xs">
-                    <label class="flex items-center gap-2 cursor-pointer text-slate-600">
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-600 dark:text-slate-400">
+                        <input type="checkbox" name="remember" class="rounded text-blue-600 focus:ring-blue-500">
+                        <span>Ingat saya di perangkat ini</span>
+                    </label>
+                </div>
+
+                <div>
+                    <button type="submit" class="w-full py-3 px-4 rounded-xl bg-[#0f2e5a] hover:bg-[#1a447e] text-white font-bold text-sm shadow-md hover:shadow-lg transition">
+                        Masuk ke Dashboard
+                    </button>
+                </div>
+
+                <!-- Credential Hint -->
+                <div class="p-3.5 bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900 rounded-xl text-[11px] text-blue-900 dark:text-blue-300 space-y-1">
+                    <div class="font-bold flex items-center gap-1">
+                        <span>🔑</span> Akun Bawaan (Default):
+                    </div>
+                    <div>Email: <strong class="font-mono">admin@dprd-tangerangkota.go.id</strong></div>
+                    <div>Password: <strong class="font-mono">password123</strong></div>
+                </div>
+            </form>
+        </div>
                         <input type="checkbox" name="remember" class="rounded text-blue-600 focus:ring-blue-500">
                         <span>Ingat saya di perangkat ini</span>
                     </label>
