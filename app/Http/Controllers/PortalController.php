@@ -12,27 +12,12 @@ class PortalController extends Controller
 {
     public function index()
     {
-        $fraksiList = [
-            'Golkar',
-            'PDIP',
-            'Gerindra',
-            'PKS',
-            'PKB',
-            'Demokrat',
-            'PAN',
-            'PSI',
-            'NasDem',
-            'PPP',
-            'Lainnya',
-        ];
-
         $kategoriList = [
             'Pimpinan',
             'Komisi I',
             'Komisi II',
             'Komisi III',
             'Komisi IV',
-            'AKD',
         ];
 
         $jenisPublikasiList = [
@@ -47,7 +32,15 @@ class PortalController extends Controller
             ->where('status', 'approved')
             ->count();
 
-        return view('portal.index', compact('fraksiList', 'kategoriList', 'jenisPublikasiList', 'todayApprovedCount'));
+        // Upcoming orders for high-readability agenda list
+        $upcomingOrders = MediaOrder::whereIn('status', ['approved', 'pending'])
+            ->whereDate('tanggal_kegiatan', '>=', Carbon::today())
+            ->orderBy('tanggal_kegiatan', 'asc')
+            ->orderBy('waktu_mulai', 'asc')
+            ->take(25)
+            ->get();
+
+        return view('portal.index', compact('kategoriList', 'jenisPublikasiList', 'todayApprovedCount', 'upcomingOrders'));
     }
 
     public function events()
@@ -62,15 +55,14 @@ class PortalController extends Controller
 
             return [
                 'id' => $order->id,
-                'title' => "[$waktu] {$order->nama_pemohon} ({$order->fraksi})",
+                'title' => "[$waktu] {$order->nama_kegiatan} - {$order->nama_pemohon}",
                 'start' => $order->tanggal_kegiatan->format('Y-m-d') . 'T' . $waktu . ':00',
-                'backgroundColor' => $isApproved ? '#0f2e5a' : '#d97706',
-                'borderColor' => $isApproved ? '#0a1d37' : '#b45309',
+                'backgroundColor' => $isApproved ? '#059669' : '#d97706',
+                'borderColor' => $isApproved ? '#047857' : '#b45309',
                 'textColor' => '#ffffff',
                 'extendedProps' => [
                     'kode_booking' => $order->kode_booking,
                     'nama_pemohon' => $order->nama_pemohon,
-                    'fraksi' => $order->fraksi,
                     'kategori' => $order->kategori,
                     'nama_kegiatan' => $order->nama_kegiatan,
                     'waktu' => $waktu . ' WIB',
@@ -88,7 +80,6 @@ class PortalController extends Controller
     {
         $validated = $request->validate([
             'nama_pemohon' => ['required', 'string', 'max:255'],
-            'fraksi' => ['required', 'string', 'max:50'],
             'no_whatsapp' => ['required', 'string', 'min:9', 'max:20'],
             'nama_kegiatan' => ['required', 'string', 'max:255'],
             'kategori' => ['required', 'string', 'max:50'],
@@ -98,7 +89,6 @@ class PortalController extends Controller
             'file_dokumen' => ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'],
         ], [
             'nama_pemohon.required' => 'Nama pemohon / Anggota Dewan wajib diisi.',
-            'fraksi.required' => 'Fraksi wajib dipilih.',
             'no_whatsapp.required' => 'Nomor WhatsApp wajib diisi untuk konfirmasi.',
             'nama_kegiatan.required' => 'Nama kegiatan wajib diisi.',
             'kategori.required' => 'Kategori kegiatan wajib dipilih.',
@@ -116,7 +106,7 @@ class PortalController extends Controller
         $order = MediaOrder::create([
             'kode_booking' => MediaOrder::generateKodeBooking(),
             'nama_pemohon' => $validated['nama_pemohon'],
-            'fraksi' => $validated['fraksi'],
+            'fraksi' => $request->input('fraksi', '-'),
             'no_whatsapp' => $validated['no_whatsapp'],
             'nama_kegiatan' => $validated['nama_kegiatan'],
             'kategori' => $validated['kategori'],

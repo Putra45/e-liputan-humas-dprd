@@ -25,7 +25,6 @@ class MediaOrderTest extends TestCase
         MediaOrder::create([
             'kode_booking' => 'HUMAS-202610-001',
             'nama_pemohon' => 'Anggota Dewan A',
-            'fraksi' => 'Golkar',
             'no_whatsapp' => '081234567890',
             'nama_kegiatan' => 'Kunjungan Kerja',
             'kategori' => 'Pimpinan',
@@ -39,7 +38,7 @@ class MediaOrderTest extends TestCase
         $response->assertStatus(200);
         $response->assertJsonFragment([
             'nama_pemohon' => 'Anggota Dewan A',
-            'fraksi' => 'Golkar',
+            'nama_kegiatan' => 'Kunjungan Kerja',
         ]);
     }
 
@@ -52,7 +51,6 @@ class MediaOrderTest extends TestCase
             'waktu_mulai' => '09:00',
             'jenis_publikasi' => 'Liputan (Rilis Website, Video Liputan untuk media sosial DPRD)',
             'nama_pemohon' => 'H. Rusdi Alam',
-            'fraksi' => 'Golkar',
             'no_whatsapp' => '081289123456',
         ]);
 
@@ -61,7 +59,6 @@ class MediaOrderTest extends TestCase
 
         $this->assertDatabaseHas('media_orders', [
             'nama_pemohon' => 'H. Rusdi Alam',
-            'fraksi' => 'Golkar',
             'status' => 'pending',
         ]);
     }

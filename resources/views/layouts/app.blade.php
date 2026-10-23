@@ -50,9 +50,10 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
-        /* FullCalendar Custom Clean Styling */
+        /* FullCalendar Custom High-Contrast & Senior-Friendly Styling */
         .fc-theme-standard td, .fc-theme-standard th {
-            border-color: #e2e8f0;
+            border-color: #94a3b8 !important;
+            border-width: 1.5px !important;
         }
         .fc-header-toolbar {
             margin-bottom: 1.25rem !important;
@@ -61,26 +62,49 @@
             align-items: center;
         }
         .fc-toolbar-title {
-            font-size: 1.25rem !important;
+            font-size: 1.35rem !important;
             font-weight: 800 !important;
             color: #0f2e5a !important;
-            letter-spacing: -0.025em;
+            letter-spacing: -0.02em;
+        }
+        .fc-col-header-cell-cushion {
+            font-size: 0.95rem !important;
+            font-weight: 800 !important;
+            color: #0f2e5a !important;
+            padding: 8px 4px !important;
+            text-transform: uppercase;
+        }
+        .fc-daygrid-day-number {
+            font-weight: 800 !important;
+            font-size: 1.1rem !important;
+            color: #0f172a !important;
+            padding: 6px 10px !important;
+        }
+        .fc-daygrid-day {
+            transition: background-color 0.15s ease;
+        }
+        .fc-daygrid-day:hover {
+            background-color: rgba(224, 242, 254, 0.6) !important;
+            cursor: pointer;
+        }
+        .fc-day-today {
+            background-color: rgba(254, 243, 199, 0.7) !important;
+            border: 2.5px solid #f59e0b !important;
         }
         .fc-button-primary {
             background-color: #0f2e5a !important;
             border-color: #0f2e5a !important;
             text-transform: capitalize;
-            font-weight: 600;
-            font-size: 0.85rem !important;
+            font-weight: 700;
+            font-size: 0.9rem !important;
             border-radius: 0.75rem !important;
-            padding: 0.45rem 0.95rem !important;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            padding: 0.5rem 1rem !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
             transition: all 0.15s ease;
         }
         .fc-button-primary:hover {
             background-color: #1e3a8a !important;
             border-color: #1e3a8a !important;
-            transform: translateY(-1px);
         }
         .fc-button-active {
             background-color: #1d4ed8 !important;
@@ -88,53 +112,55 @@
         }
         .fc-event {
             cursor: pointer;
-            border-radius: 6px;
-            padding: 3px 6px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            line-height: 1.3;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-radius: 8px !important;
+            padding: 4px 8px !important;
+            font-size: 0.88rem !important;
+            font-weight: 700 !important;
+            line-height: 1.35 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
             transition: transform 0.15s ease, box-shadow 0.15s ease;
-            margin-bottom: 2px !important;
+            margin-bottom: 4px !important;
+            border-width: 1.5px !important;
         }
         .fc-event:hover {
             transform: scale(1.02);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.12);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
         }
-        .fc-daygrid-day-number {
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: #475569;
-            padding: 4px 8px !important;
-        }
-        .fc-day-today {
-            background-color: rgba(239, 246, 255, 0.7) !important;
-        }
-        /* FullCalendar List View */
+        /* FullCalendar List View for older people */
         .fc-list-event {
             cursor: pointer;
+            font-size: 0.95rem !important;
+            font-weight: 600 !important;
         }
-        .fc-list-event-dot {
-            border-radius: 50% !important;
+        .fc-list-event:hover td {
+            background-color: #f1f5f9 !important;
         }
         .fc-list-day-cushion {
-            background-color: #f1f5f9 !important;
-            font-weight: 700 !important;
-            font-size: 0.85rem !important;
+            background-color: #e2e8f0 !important;
+            font-weight: 800 !important;
+            font-size: 0.95rem !important;
             color: #0f2e5a !important;
+            padding: 8px 14px !important;
         }
-        /* Dark Mode Calendar adjustments */
+        /* Dark Mode Calendar High-Contrast adjustments */
         .dark .fc-theme-standard td, .dark .fc-theme-standard th {
-            border-color: #334155 !important;
+            border-color: #475569 !important;
         }
         .dark .fc-toolbar-title {
             color: #f8fafc !important;
         }
-        .dark .fc-col-header-cell-cushion, .dark .fc-daygrid-day-number {
-            color: #cbd5e1 !important;
+        .dark .fc-col-header-cell-cushion {
+            color: #93c5fd !important;
+        }
+        .dark .fc-daygrid-day-number {
+            color: #f8fafc !important;
+        }
+        .dark .fc-daygrid-day:hover {
+            background-color: rgba(30, 58, 138, 0.45) !important;
         }
         .dark .fc-day-today {
-            background-color: rgba(30, 58, 138, 0.3) !important;
+            background-color: rgba(180, 83, 9, 0.25) !important;
+            border: 2px solid #f59e0b !important;
         }
         .dark .fc-list-day-cushion {
             background-color: #1e293b !important;
@@ -185,7 +211,7 @@
 
                     @auth
                         <a href="{{ route('admin.orders.index') }}" class="px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold transition {{ request()->routeIs('admin.*') ? 'bg-amber-400 text-slate-950' : 'bg-amber-500 hover:bg-amber-400 text-slate-950' }}">
-                            Admin
+                            Dashboard Admin
                         </a>
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
@@ -193,13 +219,6 @@
                                 Keluar
                             </button>
                         </form>
-                    @else
-                        <a href="{{ route('login') }}" class="px-3 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                            </svg>
-                            <span class="hidden xs:inline">Login</span> Admin
-                        </a>
                     @endauth
                 </nav>
             </div>

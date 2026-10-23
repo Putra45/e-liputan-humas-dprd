@@ -34,11 +34,14 @@ class WhatsAppService
     {
         $tanggalFormatted = $order->tanggal_kegiatan ? $order->tanggal_kegiatan->isoFormat('dddd, D MMMM Y') : '-';
         $waktu = $order->waktu_disetujui ? substr($order->waktu_disetujui, 0, 5) : substr($order->waktu_mulai, 0, 5);
+        $sapaanPemohon = (!empty($order->fraksi) && $order->fraksi !== '-')
+            ? "Yth. *{$order->nama_pemohon}* ({$order->fraksi})\n\n"
+            : "Yth. *{$order->nama_pemohon}*\n\n";
 
         if ($order->status === 'approved') {
             $msg = "🏛 *TIM PUBLIKASI HUMAS DPRD KOTA TANGERANG*\n";
             $msg .= "----------------------------------------\n";
-            $msg .= "Yth. *{$order->nama_pemohon}* ({$order->fraksi})\n\n";
+            $msg .= $sapaanPemohon;
             $msg .= "Permohonan peliputan Anda telah *DISETUJUI (ACC)*.\n\n";
             $msg .= "📋 *Kode Booking:* {$order->kode_booking}\n";
             $msg .= "📌 *Kegiatan:* {$order->nama_kegiatan}\n";
@@ -59,7 +62,7 @@ class WhatsAppService
         if ($order->status === 'rejected') {
             $msg = "🏛 *TIM PUBLIKASI HUMAS DPRD KOTA TANGERANG*\n";
             $msg .= "----------------------------------------\n";
-            $msg .= "Yth. *{$order->nama_pemohon}* ({$order->fraksi})\n\n";
+            $msg .= $sapaanPemohon;
             $msg .= "Mohon maaf, permohonan peliputan Anda *BELUM DAPAT DISETUJUI*.\n\n";
             $msg .= "📋 *Kode Booking:* {$order->kode_booking}\n";
             $msg .= "📌 *Kegiatan:* {$order->nama_kegiatan}\n";
@@ -77,7 +80,7 @@ class WhatsAppService
         // Default pending confirmation
         $msg = "🏛 *TIM PUBLIKASI HUMAS DPRD KOTA TANGERANG*\n";
         $msg .= "----------------------------------------\n";
-        $msg .= "Yth. *{$order->nama_pemohon}* ({$order->fraksi})\n\n";
+        $msg .= $sapaanPemohon;
         $msg .= "Permohonan peliputan Anda telah kami terima dengan status *MENUNGGU KONFIRMASI (PENDING)*.\n\n";
         $msg .= "📋 *Kode Booking:* {$order->kode_booking}\n";
         $msg .= "📌 *Kegiatan:* {$order->nama_kegiatan}\n";

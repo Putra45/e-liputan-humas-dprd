@@ -57,15 +57,11 @@ class AdminOrderController extends Controller
                 ->count(),
         ];
 
-        $fraksiList = [
-            'Golkar', 'PDIP', 'Gerindra', 'PKS', 'PKB', 'Demokrat', 'PAN', 'PSI', 'NasDem', 'PPP', 'Lainnya',
-        ];
-
         $kategoriList = [
-            'Pimpinan', 'Komisi I', 'Komisi II', 'Komisi III', 'Komisi IV', 'AKD',
+            'Pimpinan', 'Komisi I', 'Komisi II', 'Komisi III', 'Komisi IV',
         ];
 
-        return view('admin.orders.index', compact('orders', 'stats', 'fraksiList', 'kategoriList'));
+        return view('admin.orders.index', compact('orders', 'stats', 'kategoriList'));
     }
 
     public function show(MediaOrder $order, WhatsAppService $wa)

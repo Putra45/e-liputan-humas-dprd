@@ -106,7 +106,7 @@
 
     <!-- Filters & Search -->
     <div class="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-        <form method="GET" action="{{ route('admin.orders.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 items-end">
+        <form method="GET" action="{{ route('admin.orders.index') }}" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 items-end">
             <!-- Search -->
             <div>
                 <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Cari Pemohon / Kegiatan</label>
@@ -121,17 +121,6 @@
                     <option value="pending" {{ request('status') === 'pending' ? 'selected' : '' }}>Pending (Menunggu)</option>
                     <option value="approved" {{ request('status') === 'approved' ? 'selected' : '' }}>Disetujui (ACC)</option>
                     <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Ditolak</option>
-                </select>
-            </div>
-
-            <!-- Fraksi Filter -->
-            <div>
-                <label class="block text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Fraksi</label>
-                <select name="fraksi" class="w-full px-3 py-2 text-xs border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl focus:border-blue-600">
-                    <option value="all">Semua Fraksi</option>
-                    @foreach($fraksiList as $fr)
-                        <option value="{{ $fr }}" {{ request('fraksi') === $fr ? 'selected' : '' }}>{{ $fr }}</option>
-                    @endforeach
                 </select>
             </div>
 
@@ -160,7 +149,7 @@
                 <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 uppercase font-bold text-[10px] tracking-wider border-b border-slate-200 dark:border-slate-800">
                     <tr>
                         <th class="py-3.5 px-4">Booking & Tanggal</th>
-                        <th class="py-3.5 px-4">Pemohon & Fraksi</th>
+                        <th class="py-3.5 px-4">Pemohon & Kontak</th>
                         <th class="py-3.5 px-4">Kegiatan & Kategori</th>
                         <th class="py-3.5 px-4">Jam Diajukan / ACC</th>
                         <th class="py-3.5 px-4">Dokumen</th>
@@ -182,7 +171,6 @@
                         <!-- Pemohon -->
                         <td class="py-3.5 px-4">
                             <div class="font-bold text-slate-900 dark:text-white">{{ $item->nama_pemohon }}</div>
-                            <div class="text-[11px] text-blue-700 dark:text-blue-400 font-medium">Fraksi {{ $item->fraksi }}</div>
                             <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono flex items-center gap-1 mt-0.5">
                                 <span>📱</span> {{ $item->no_whatsapp }}
                             </div>
@@ -283,7 +271,6 @@
                 <div class="font-bold text-slate-800 dark:text-white text-sm" id="detail-kegiatan"></div>
                 <div class="grid grid-cols-2 gap-2 text-xs text-slate-600 dark:text-slate-300 pt-1">
                     <div>Pemohon: <strong class="text-slate-900 dark:text-white" id="detail-pemohon"></strong></div>
-                    <div>Fraksi: <strong class="text-blue-800 dark:text-blue-400" id="detail-fraksi"></strong></div>
                     <div>Tanggal: <strong class="text-slate-900 dark:text-white" id="detail-tanggal"></strong></div>
                     <div>Kategori: <strong class="text-slate-900 dark:text-white" id="detail-kategori"></strong></div>
                     <div>Waktu Diajukan: <strong class="text-slate-900 dark:text-white" id="detail-waktu-mulai"></strong></div>
@@ -366,7 +353,6 @@
             document.getElementById('modal-subheading').innerText = `Kode Booking: ${order.kode_booking}`;
             document.getElementById('detail-kegiatan').innerText = order.nama_kegiatan;
             document.getElementById('detail-pemohon').innerText = order.nama_pemohon;
-            document.getElementById('detail-fraksi').innerText = order.fraksi;
             document.getElementById('detail-tanggal').innerText = data.tanggal_formatted;
             document.getElementById('detail-kategori').innerText = order.kategori;
             document.getElementById('detail-waktu-mulai').innerText = `${data.waktu_mulai_formatted} WIB`;
