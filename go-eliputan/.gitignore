@@ -1,0 +1,8 @@
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+.env
+uploads/
+eliputan
+eliputan.exe
