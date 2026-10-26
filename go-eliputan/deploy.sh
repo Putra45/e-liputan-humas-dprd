@@ -138,11 +138,7 @@ server {
     access_log /www/wwwlogs/liputan.172.235.246.16.nip.io.log;
     error_log /www/wwwlogs/liputan.172.235.246.16.nip.io.error.log;
 
-    # Security headers
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-Frame-Options "DENY" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    # Security headers handled by Go app — not duplicated here
 
     # Max upload 10MB
     client_max_body_size 10m;

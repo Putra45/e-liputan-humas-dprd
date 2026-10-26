@@ -23,8 +23,8 @@ import (
 )
 
 type Handler struct {
-	db   *sql.DB
-	tmpl *template.Template
+	db    *sql.DB
+	tmpls map[string]*template.Template
 }
 
 type MediaOrder struct {
@@ -139,16 +139,52 @@ func New(database *sql.DB, fs embed.FS) *Handler {
 			}
 			return s[start:end]
 		},
-		"index": func(m map[string]string, key string) string {
+		"hasKey": func(m map[string]string, key string) bool {
+			v, ok := m[key]
+			return ok && v != ""
+		},
+		"getFlash": func(m map[string]string, key string) string {
+			if m == nil {
+				return ""
+			}
 			return m[key]
 		},
 	}
 
-	tmpl, err := template.New("").Funcs(funcMap).ParseFS(fs, "templates/*.html")
+	// Parse each page template separately with the layout to avoid block conflicts
+	layoutBytes, err := templateFS.ReadFile("templates/layout.html")
 	if err != nil {
-		log.Fatal("parse templates:", err)
+		log.Fatal("read layout:", err)
 	}
-	return &Handler{db: database, tmpl: tmpl}
+	layoutStr := string(layoutBytes)
+
+	pages := map[string]string{
+		"portal.html": "templates/portal.html",
+		"login.html":  "templates/login.html",
+		"admin.html":  "templates/admin.html",
+	}
+
+	tmpls := make(map[string]*template.Template)
+	for name, path := range pages {
+		pageBytes, err := fs.ReadFile(path)
+		if err != nil {
+			log.Fatalf("read %s: %v", path, err)
+		}
+		t := template.Must(
+			template.New("layout").Funcs(funcMap).Parse(layoutStr),
+		)
+		template.Must(t.New(name).Parse(string(pageBytes)))
+		tmpls[name] = t
+	}
+
+	return &Handler{db: database, tmpls: tmpls}
+}
+
+// templateFS reference for New() - set from main
+var templateFS embed.FS
+
+func SetTemplateFS(fs embed.FS) {
+	templateFS = fs
 }
 
 func (h *Handler) render(w http.ResponseWriter, name string, data map[string]any, r *http.Request) {
@@ -164,8 +200,20 @@ func (h *Handler) render(w http.ResponseWriter, name string, data map[string]any
 	data["CurrentPath"] = r.URL.Path
 	data["Year"] = time.Now().Year()
 
+	// Ensure Flash always exists
+	if _, ok := data["Flash"]; !ok {
+		data["Flash"] = map[string]string{}
+	}
+
+	t, ok := h.tmpls[name]
+	if !ok {
+		log.Printf("template %s not found", name)
+		http.Error(w, "Internal Server Error", 500)
+		return
+	}
+
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	if err := h.tmpl.ExecuteTemplate(w, name, data); err != nil {
+	if err := t.ExecuteTemplate(w, "layout", data); err != nil {
 		log.Printf("render %s: %v", name, err)
 		http.Error(w, "Internal Server Error", 500)
 	}

@@ -25,6 +25,7 @@ func main() {
 	db.Migrate(database)
 	db.Seed(database)
 
+	handler.SetTemplateFS(templateFS)
 	h := handler.New(database, templateFS)
 
 	mux := http.NewServeMux()
