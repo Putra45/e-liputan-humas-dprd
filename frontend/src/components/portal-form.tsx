@@ -44,11 +44,12 @@ export function PortalForm({ data, initialDate, onClose, onSubmitted }: Props) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.currentTarget;
     setErrors([]);
     setSubmitting(true);
     try {
       await ensureCsrf();
-      const result = await api.createOrder(new FormData(e.currentTarget));
+      const result = await api.createOrder(new FormData(form));
       setSuccess(result);
       onSubmitted();
     } catch (err) {
