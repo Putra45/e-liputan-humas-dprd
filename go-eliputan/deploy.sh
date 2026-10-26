@@ -74,6 +74,8 @@ chmod +x /usr/local/bin/eliputan
 
 echo "  Building Next.js..."
 cd "${APP_DIR}/frontend"
+# Next 16 keeps prerendered HTML in .next/cache; without this the old page survives a rebuild.
+rm -rf .next
 npm ci
 NEXT_PUBLIC_API_URL="http://127.0.0.1:${PORT}" npm run build
 
