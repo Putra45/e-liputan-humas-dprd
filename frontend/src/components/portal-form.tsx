@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, ensureCsrf } from "@/lib/api";
 import type { PortalData } from "@/lib/types";
 
 interface Props {
   data: PortalData | null;
   initialDate: string;
+  bookedDates: Set<string>;
   onClose: () => void;
   onSubmitted: () => void;
 }
@@ -25,16 +26,24 @@ const fieldClass =
 const chipClass =
   "px-2 py-1 rounded-md bg-surface-2 border border-line hover:border-line-strong text-xs font-medium text-ink-2 transition-colors";
 
-export function PortalForm({ data, initialDate, onClose, onSubmitted }: Props) {
+export function PortalForm({ data, initialDate, bookedDates, onClose, onSubmitted }: Props) {
   const [tanggal, setTanggal] = useState(initialDate);
   const [waktu, setWaktu] = useState("09:00");
   const [fileName, setFileName] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState<Success | null>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
 
   const today = data?.today ?? "";
   const isToday = tanggal !== "" && tanggal === today;
+  const dateTaken = tanggal !== "" && bookedDates.has(tanggal);
+
+  // Keep server-side rejections visible without the user scrolling up.
+  useEffect(() => {
+    if (errors.length > 0) errorRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [errors]);
 
   function quickDate(offset: number) {
     const d = new Date();
@@ -45,6 +54,12 @@ export function PortalForm({ data, initialDate, onClose, onSubmitted }: Props) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = e.currentTarget;
+    if (dateTaken) {
+      setErrors([]);
+      dateRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+      dateRef.current?.focus();
+      return;
+    }
     setErrors([]);
     setSubmitting(true);
     try {
@@ -137,8 +152,9 @@ export function PortalForm({ data, initialDate, onClose, onSubmitted }: Props) {
       <div className="overflow-y-auto px-5 py-5 space-y-6">
         {errors.length > 0 && (
           <div
+            ref={errorRef}
             role="alert"
-            className="p-3 rounded-lg border border-rose-200 bg-rose-50 text-sm text-rose-800 dark:border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-200"
+            className="sticky top-0 z-10 p-3 rounded-lg border border-rose-200 bg-rose-50 text-sm text-rose-800 dark:border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-200 shadow-sm"
           >
             <p className="font-semibold mb-1">Mohon periksa kembali</p>
             <ul className="list-disc list-inside space-y-0.5">
@@ -174,6 +190,7 @@ export function PortalForm({ data, initialDate, onClose, onSubmitted }: Props) {
                 Tanggal <span className="text-rose-500">*</span>
               </label>
               <input
+                ref={dateRef}
                 id="tanggal_kegiatan"
                 name="tanggal_kegiatan"
                 type="date"
@@ -181,7 +198,10 @@ export function PortalForm({ data, initialDate, onClose, onSubmitted }: Props) {
                 min={today}
                 value={tanggal}
                 onChange={(e) => setTanggal(e.target.value)}
-                className={fieldClass}
+                aria-invalid={dateTaken || undefined}
+                className={`${fieldClass} ${
+                  dateTaken ? "border-rose-400 focus:border-rose-500 focus:ring-rose-500/20" : ""
+                }`}
               />
               <div className="flex gap-1.5 mt-2 text-xs">
                 <button type="button" onClick={() => quickDate(0)} className={chipClass}>
@@ -194,6 +214,31 @@ export function PortalForm({ data, initialDate, onClose, onSubmitted }: Props) {
                   Lusa
                 </button>
               </div>
+              {dateTaken && (
+                <div
+                  role="alert"
+                  className="mt-2 flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-2.5 py-2 text-xs text-rose-800 dark:border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-200"
+                >
+                  <svg
+                    className="w-4 h-4 shrink-0 mt-px"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                    />
+                  </svg>
+                  <span>
+                    <span className="font-semibold">Tanggal sudah dibooking agenda lain.</span> Pilih tanggal
+                    yang masih kosong.
+                  </span>
+                </div>
+              )}
               {isToday && (
                 <p className="mt-2 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25 rounded-md px-2 py-1.5">
                   Pemesanan hari H tetap diproses, dengan prioritas agenda resmi.

@@ -40,6 +40,7 @@ export function PortalView() {
   }, [load]);
 
   const upcomingCount = data?.upcomingOrders?.length ?? 0;
+  const bookedDates = new Set(events.map((e) => e.start.slice(0, 10)));
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
@@ -120,6 +121,7 @@ export function PortalView() {
             key={formDate}
             data={data}
             initialDate={formDate}
+            bookedDates={bookedDates}
             onClose={() => setFormDate(null)}
             onSubmitted={load}
           />
