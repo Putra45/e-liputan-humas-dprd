@@ -157,9 +157,12 @@ done
 # 7. Nginx: Next.js di "/", Go di "/api/" dan file upload
 echo "[7/8] Configuring Nginx reverse proxy..."
 NGINX_CONF="/www/server/panel/vhost/nginx/${DOMAIN}.conf"
-LOCATIONS_CONF="/www/server/panel/vhost/nginx/${DOMAIN}.locations.conf"
+# Ekstensi bukan .conf: aaPanel meng-include /www/server/panel/vhost/nginx/*.conf
+# di level http, sehingga file berisi "location" akan membuat config nginx invalid.
+LOCATIONS_CONF="/www/server/panel/vhost/nginx/${DOMAIN}.locations.inc"
 CERT_DIR="/www/server/panel/vhost/cert/${DOMAIN}"
 [ -f "${NGINX_CONF}" ] && cp "${NGINX_CONF}" "${NGINX_CONF}.bak.$(date +%s)"
+rm -f "/www/server/panel/vhost/nginx/${DOMAIN}.locations.conf"
 
 # Folder challenge untuk Let's Encrypt (HTTP-01) dan pembaruan otomatisnya.
 mkdir -p "${APP_DIR}/acme/.well-known/acme-challenge"
@@ -205,7 +208,7 @@ NGINXEOF
 # Blok HTTPS hanya ditulis kalau sertifikatnya sudah ada, jadi deploy tidak
 # menghapus SSL yang sudah terpasang.
 SSL_SERVER=""
-if [ -f "${CERT_DIR}/fullchain.pem" ] && [ -f "${CERT_DIR}/privkey.pem" ]; then
+if [ -s "${CERT_DIR}/fullchain.pem" ] && [ -s "${CERT_DIR}/privkey.pem" ]; then
     SSL_SERVER="server {
     listen 443 ssl;
     listen [::]:443 ssl;
@@ -247,7 +250,17 @@ if /www/server/nginx/sbin/nginx -t; then
     /www/server/nginx/sbin/nginx -s reload
     echo "  ✅ Nginx reloaded"
 else
-    echo "  ❌ Config Nginx tidak valid, reload dibatalkan (situs lama tetap jalan)"
+    # Jangan tinggalkan config rusak: kembalikan backup terakhir supaya nginx
+    # tetap bisa start setelah reboot.
+    LATEST_BAK=$(ls -t "${NGINX_CONF}".bak.* 2>/dev/null | head -1)
+    if [ -n "${LATEST_BAK}" ]; then
+        cp "${LATEST_BAK}" "${NGINX_CONF}"
+        /www/server/nginx/sbin/nginx -t && /www/server/nginx/sbin/nginx -s reload
+        echo "  ❌ Config Nginx baru tidak valid — dikembalikan ke backup: ${LATEST_BAK}"
+    else
+        echo "  ❌ Config Nginx tidak valid dan tidak ada backup."
+    fi
+    exit 1
 fi
 
 # 8. Test
