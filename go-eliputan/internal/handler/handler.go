@@ -125,8 +125,6 @@ func New(database *sql.DB, fs embed.FS) *Handler {
 			}
 			return s
 		},
-		"eq":        func(a, b string) bool { return a == b },
-		"ne":        func(a, b string) bool { return a != b },
 		"add":       func(a, b int) int { return a + b },
 		"split":     func(s, sep string) []string { return strings.Split(s, sep) },
 		"truncTime": truncTime,
