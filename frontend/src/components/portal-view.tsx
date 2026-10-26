@@ -42,6 +42,19 @@ export function PortalView() {
   const upcomingCount = data?.upcomingOrders?.length ?? 0;
   const bookedDates = new Set(events.map((e) => e.start.slice(0, 10)));
 
+  // "Ajukan liputan" should not prefill a date that is already taken.
+  function defaultDate() {
+    const d = new Date();
+    for (let i = 0; i < 60; i++) {
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+        d.getDate(),
+      ).padStart(2, "0")}`;
+      if (!bookedDates.has(key)) return key;
+      d.setDate(d.getDate() + 1);
+    }
+    return data?.today ?? "";
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
       <section className="overflow-hidden rounded-2xl border border-navy-900/10 dark:border-line bg-navy-800 dark:bg-surface-2">
@@ -61,7 +74,7 @@ export function PortalView() {
           <div className="flex flex-wrap gap-2.5">
             <button
               type="button"
-              onClick={() => setFormDate(data?.today ?? "")}
+              onClick={() => setFormDate(defaultDate())}
               className="px-4 py-2.5 rounded-lg bg-accent-500 hover:bg-accent-400 text-navy-900 text-sm font-semibold transition-colors"
             >
               Ajukan liputan
