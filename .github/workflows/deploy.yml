@@ -1,0 +1,27 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+    paths: ['go-eliputan/**']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: root
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            export PATH=$PATH:/usr/local/go/bin
+            cd /www/wwwroot/liputan.172.235.246.16.nip.io
+            git fetch origin main
+            git reset --hard origin/main
+            cd go-eliputan
+            CGO_ENABLED=0 go build -ldflags="-s -w" -o /usr/local/bin/eliputan .
+            chown -R www:www .
+            systemctl restart eliputan
+            echo "Deploy done: $(date)"
