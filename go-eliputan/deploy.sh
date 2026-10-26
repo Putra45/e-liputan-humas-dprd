@@ -157,7 +157,74 @@ done
 # 7. Nginx: Next.js di "/", Go di "/api/" dan file upload
 echo "[7/8] Configuring Nginx reverse proxy..."
 NGINX_CONF="/www/server/panel/vhost/nginx/${DOMAIN}.conf"
+LOCATIONS_CONF="/www/server/panel/vhost/nginx/${DOMAIN}.locations.conf"
+CERT_DIR="/www/server/panel/vhost/cert/${DOMAIN}"
 [ -f "${NGINX_CONF}" ] && cp "${NGINX_CONF}" "${NGINX_CONF}.bak.$(date +%s)"
+
+# Folder challenge untuk Let's Encrypt (HTTP-01) dan pembaruan otomatisnya.
+mkdir -p "${APP_DIR}/acme/.well-known/acme-challenge"
+
+cat > "${LOCATIONS_CONF}" << NGINXEOF
+location /uploads/ {
+    alias ${APP_DIR}/go-eliputan/uploads/;
+    expires 7d;
+}
+
+location /.well-known/acme-challenge/ {
+    root ${APP_DIR}/acme;
+}
+
+location /api/ {
+    proxy_cache off;
+    proxy_pass http://127.0.0.1:${PORT};
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+    proxy_connect_timeout 10;
+    proxy_read_timeout 30;
+}
+
+location / {
+    proxy_cache off;
+    proxy_no_cache 1;
+    proxy_cache_bypass 1;
+    proxy_pass http://127.0.0.1:${WEB_PORT};
+    proxy_set_header Host \$host;
+    proxy_set_header X-Real-IP \$remote_addr;
+    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto \$scheme;
+    proxy_connect_timeout 10;
+    proxy_read_timeout 30;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade \$http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+NGINXEOF
+
+# Blok HTTPS hanya ditulis kalau sertifikatnya sudah ada, jadi deploy tidak
+# menghapus SSL yang sudah terpasang.
+SSL_SERVER=""
+if [ -f "${CERT_DIR}/fullchain.pem" ] && [ -f "${CERT_DIR}/privkey.pem" ]; then
+    SSL_SERVER="server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name ${DOMAIN};
+
+    access_log /www/wwwlogs/${DOMAIN}.log;
+    error_log /www/wwwlogs/${DOMAIN}.error.log;
+
+    ssl_certificate ${CERT_DIR}/fullchain.pem;
+    ssl_certificate_key ${CERT_DIR}/privkey.pem;
+
+    client_max_body_size 10m;
+
+    include ${LOCATIONS_CONF};
+}"
+    echo "  ✅ Sertifikat SSL ditemukan, blok HTTPS ikut ditulis"
+else
+    echo "  ℹ️  Belum ada sertifikat SSL untuk ${DOMAIN} (HTTP saja)"
+fi
 
 cat > "${NGINX_CONF}" << NGINXEOF
 server {
@@ -170,42 +237,18 @@ server {
 
     client_max_body_size 10m;
 
-    location /uploads/ {
-        alias ${APP_DIR}/go-eliputan/uploads/;
-        expires 7d;
-    }
-
-    location /api/ {
-        proxy_cache off;
-        proxy_pass http://127.0.0.1:${PORT};
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_connect_timeout 10;
-        proxy_read_timeout 30;
-    }
-
-    location / {
-        proxy_cache off;
-        proxy_no_cache 1;
-        proxy_cache_bypass 1;
-        proxy_pass http://127.0.0.1:${WEB_PORT};
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-        proxy_connect_timeout 10;
-        proxy_read_timeout 30;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
+    include ${LOCATIONS_CONF};
 }
+
+${SSL_SERVER}
 NGINXEOF
 
-/www/server/nginx/sbin/nginx -t && /www/server/nginx/sbin/nginx -s reload
-echo "  ✅ Nginx reloaded"
+if /www/server/nginx/sbin/nginx -t; then
+    /www/server/nginx/sbin/nginx -s reload
+    echo "  ✅ Nginx reloaded"
+else
+    echo "  ❌ Config Nginx tidak valid, reload dibatalkan (situs lama tetap jalan)"
+fi
 
 # 8. Test
 echo "[8/8] Testing..."
@@ -226,8 +269,8 @@ if [ "$API_CODE" = "200" ] && [ "$WEB_CODE" = "200" ]; then
     echo " Logs:     journalctl -u ${WEB_SERVICE_NAME} -f"
     echo ""
     echo " ⚠️  Catatan:"
-    echo " 1. File Nginx ini menimpa config lama — kalau SSL Let's Encrypt"
-    echo "    sudah aktif, apply ulang lewat aaPanel → SSL setelah deploy."
+    echo " 1. SSL otomatis dipertahankan selama sertifikat ada di"
+    echo "    /www/server/panel/vhost/cert/${DOMAIN}/"
     echo " 2. Ganti password admin default setelah login!"
     echo ""
 else
