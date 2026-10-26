@@ -96,23 +96,66 @@ html.dark .eliputan-cal {
   --fc-classic-button-outline: #93a9c480;
 }
 
-/* Soft day cells */
-.eliputan-cal .eliputan-day {
-  border-radius: 8px;
-  transition: background-color 140ms ease;
+/* Day cells as soft cards. !important beats FullCalendar's own cell reset. */
+.eliputan-cal [role=cell] {
+  margin: 3px !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 10px;
+  background: var(--surface);
+  transition: background-color 140ms ease, border-color 140ms ease;
 }
-.eliputan-cal .eliputan-day.is-weekend {
+.eliputan-cal [role=cell] > div:last-child:empty {
+  display: none;
+}
+.eliputan-cal [role=cell][aria-disabled="true"] {
+  background: transparent !important;
+  border-color: transparent !important;
+}
+.eliputan-cal [role=cell].is-weekend {
   background: var(--surface-2);
 }
-.eliputan-cal .eliputan-day.is-past {
+.eliputan-cal [role=cell].is-past {
   opacity: 0.55;
 }
-.eliputan-cal .eliputan-day:hover {
-  background: var(--surface-3);
+.eliputan-cal [role=cell]:not(.is-booked):hover {
+  background: var(--surface-2);
+  border-color: var(--line-strong) !important;
   cursor: pointer;
 }
-.eliputan-cal .eliputan-day.is-today:hover {
-  background: var(--fc-classic-today);
+.eliputan-cal [role=cell].is-booked:hover {
+  border-color: var(--line-strong) !important;
+  cursor: pointer;
+}
+.eliputan-cal [role=cell].is-today {
+  background: #fff6e5;
+  border-color: #f59e0b !important;
+}
+html.dark .eliputan-cal [role=cell].is-today {
+  background: #f59e0b1a;
+  border-color: #f59e0b66 !important;
+}
+
+/* Day number badge */
+.eliputan-cal .eliputan-daytop {
+  justify-content: flex-start;
+  padding: 2px 2px 0;
+}
+.eliputan-cal .eliputan-daynum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-2);
+}
+.eliputan-cal [role=cell].is-today .eliputan-daynum {
+  background: #f59e0b;
+  color: #0e1b2c;
 }
 
 /* Weekend header tint */

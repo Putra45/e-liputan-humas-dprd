@@ -40,6 +40,34 @@ export function PortalCalendar({ data, events, onPickDate }: Props) {
     color: backgroundColor,
     contrastColor: textColor,
   }));
+  const bookedDates = new Set(events.map((e) => e.start.slice(0, 10)));
+
+  function showDetail(p: EventDetail) {
+    setDetail({
+      nama_kegiatan: p.nama_kegiatan,
+      nama_pemohon: p.nama_pemohon,
+      kategori: p.kategori,
+      waktu: p.waktu,
+      jenis_publikasi: p.jenis_publikasi,
+      kode_booking: p.kode_booking,
+      status: p.status,
+    });
+  }
+
+  function pickDay(dateStr: string) {
+    const booked = events.find((e) => e.start.slice(0, 10) === dateStr);
+    if (booked) {
+      showDetail(booked.extendedProps as EventDetail);
+      return;
+    }
+    onPickDate(dateStr);
+  }
+
+  function dateKey(d: Date) {
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${m}-${day}`;
+  }
 
   useEffect(() => {
     if (!detail) return;
@@ -150,6 +178,10 @@ export function PortalCalendar({ data, events, onPickDate }: Props) {
               );
             }}
             datesSet={(info) => setTitle(info.view.title)}
+            dayCellTopContent={(info) => (
+              <span className="eliputan-daynum">{info.dayNumberText}</span>
+            )}
+            dayCellTopClass="eliputan-daytop"
             dayHeaderClass={(info) =>
               info.dow === 0 || info.dow === 6 ? "eliputan-weekend-head" : ""
             }
@@ -157,21 +189,12 @@ export function PortalCalendar({ data, events, onPickDate }: Props) {
               const classes = ["eliputan-day"];
               if (info.dow === 0 || info.dow === 6) classes.push("is-weekend");
               if (info.isPast) classes.push("is-past");
+              if (info.isToday) classes.push("is-today");
+              if (bookedDates.has(dateKey(info.date))) classes.push("is-booked");
               return classes.join(" ");
             }}
-            dateClick={(info) => onPickDate(info.dateStr)}
-            eventClick={(info) => {
-              const p = info.event.extendedProps as EventDetail;
-              setDetail({
-                nama_kegiatan: p.nama_kegiatan,
-                nama_pemohon: p.nama_pemohon,
-                kategori: p.kategori,
-                waktu: p.waktu,
-                jenis_publikasi: p.jenis_publikasi,
-                kode_booking: p.kode_booking,
-                status: p.status,
-              });
-            }}
+            dateClick={(info) => pickDay(info.dateStr)}
+            eventClick={(info) => showDetail(info.event.extendedProps as EventDetail)}
           />
         </div>
       </section>
@@ -196,8 +219,8 @@ export function PortalCalendar({ data, events, onPickDate }: Props) {
             </li>
           </ul>
           <p className="mt-3.5 pt-3.5 border-t border-line text-xs text-muted leading-relaxed">
-            Klik tanggal mana pun pada kalender untuk mengisi formulir pengajuan. Nomor WhatsApp dan dokumen
-            pemohon hanya bisa diakses tim Humas.
+            Klik tanggal kosong untuk mengisi formulir pengajuan. Tanggal yang sudah ada agendanya terkunci &mdash;
+            klik untuk melihat detailnya.
           </p>
         </section>
 

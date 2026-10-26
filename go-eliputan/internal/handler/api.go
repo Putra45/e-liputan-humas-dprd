@@ -146,6 +146,14 @@ func (h *Handler) APIOrderCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// One active booking per date: pending and approved both hold the slot.
+	var taken int
+	h.db.QueryRow("SELECT COUNT(*) FROM media_orders WHERE date(tanggal_kegiatan) = date(?) AND status IN ('pending','approved')", tanggal).Scan(&taken)
+	if taken > 0 {
+		jsonError(w, 422, "Tanggal tersebut sudah dibooking agenda lain. Silakan pilih tanggal lain.")
+		return
+	}
+
 	namaKegiatan = sanitize(namaKegiatan)
 	namaPemohon = sanitize(namaPemohon)
 	noWhatsapp = sanitizePhone(noWhatsapp)
@@ -354,6 +362,16 @@ func (h *Handler) APIAdminOrderStatus(w http.ResponseWriter, r *http.Request) {
 	waktuVal := sql.NullString{}
 	if status == "approved" && waktuDisetujui != "" {
 		waktuVal = sql.NullString{String: waktuDisetujui, Valid: true}
+	}
+
+	if status != "rejected" {
+		var taken int
+		h.db.QueryRow("SELECT COUNT(*) FROM media_orders WHERE date(tanggal_kegiatan) = date(?) AND status IN ('pending','approved') AND id <> ?",
+			o.TanggalKegiatan, o.ID).Scan(&taken)
+		if taken > 0 {
+			jsonError(w, 422, "Tanggal tersebut sudah dipakai permohonan lain yang aktif.")
+			return
+		}
 	}
 
 	if _, err := h.db.Exec("UPDATE media_orders SET status = ?, waktu_disetujui = ?, catatan_admin = ?, updated_at = ? WHERE id = ?",
