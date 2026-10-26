@@ -176,6 +176,7 @@ server {
     }
 
     location /api/ {
+        proxy_cache off;
         proxy_pass http://127.0.0.1:${PORT};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -186,6 +187,9 @@ server {
     }
 
     location / {
+        proxy_cache off;
+        proxy_no_cache 1;
+        proxy_cache_bypass 1;
         proxy_pass http://127.0.0.1:${WEB_PORT};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
