@@ -18,10 +18,13 @@ export const metadata: Metadata = {
   description: "Sistem Penjadwalan & Dokumentasi Publikasi",
 };
 
+const themeScript = `try{var s=localStorage.getItem("theme");var d=s?s==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d)}catch(e){}`;
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="id" className={`${jakarta.variable} h-full`}>
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-800 antialiased font-sans">
+    <html lang="id" className={`${jakarta.variable} h-full`} suppressHydrationWarning>
+      <body className="min-h-full flex flex-col bg-canvas text-ink antialiased font-sans">
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />

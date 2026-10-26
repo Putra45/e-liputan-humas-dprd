@@ -4,32 +4,31 @@ import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { api, ensureCsrf } from "@/lib/api";
 import type { CalendarEvent, PortalData } from "@/lib/types";
+import { Dialog } from "./dialog";
 import { PortalForm } from "./portal-form";
 
 // FullCalendar v7 reads the current time during render, which Next refuses to prerender.
 const PortalCalendar = dynamic(() => import("./portal-calendar").then((m) => m.PortalCalendar), {
   ssr: false,
   loading: () => (
-    <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center text-sm text-slate-500">
+    <div className="bg-surface border border-line rounded-xl p-16 text-center text-sm text-muted">
       Memuat kalender...
     </div>
   ),
 });
 
-type Tab = "calendar" | "form";
-
 export function PortalView() {
-  const [tab, setTab] = useState<Tab>("calendar");
   const [data, setData] = useState<PortalData | null>(null);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [pickedDate, setPickedDate] = useState("");
   const [error, setError] = useState("");
+  const [formDate, setFormDate] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
       const [portal, evts] = await Promise.all([api.portal(), api.events()]);
       setData(portal);
       setEvents(evts ?? []);
+      setError("");
     } catch {
       setError("Gagal memuat jadwal. Coba muat ulang halaman.");
     }
@@ -40,97 +39,92 @@ export function PortalView() {
     load();
   }, [load]);
 
-  function pickDate(date: string) {
-    setPickedDate(date);
-    setTab("form");
-  }
+  const upcomingCount = data?.upcomingOrders?.length ?? 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5">
-      <section className="rounded-2xl bg-navy-800 text-white overflow-hidden">
-        <div className="px-5 sm:px-7 py-6 sm:py-7 flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-          <div className="max-w-xl">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-400">
-              Layanan Humas &amp; Protokol
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-5">
+      <section className="overflow-hidden rounded-2xl border border-navy-900/10 dark:border-line bg-navy-800 dark:bg-surface-2">
+        <div className="px-5 sm:px-8 py-7 sm:py-8 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-accent-400 dark:text-accent-500">
+              Humas &amp; Protokol &middot; DPRD Kota Tangerang
             </p>
-            <h1 className="mt-1.5 text-xl sm:text-2xl font-bold tracking-tight">
-              Pemesanan Peliputan &amp; Dokumentasi
+            <h1 className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-white dark:text-ink">
+              Pemesanan peliputan &amp; dokumentasi
             </h1>
-            <p className="mt-1.5 text-sm text-slate-300 leading-relaxed">
-              Cek jadwal tim peliputan, lalu pilih tanggal pada kalender untuk mengajukan permohonan.
+            <p className="mt-2.5 text-sm text-slate-300 dark:text-muted leading-relaxed">
+              Lihat jadwal tim di kalender, lalu klik tanggal untuk mengajukan permohonan liputan. Semua
+              pengajuan diverifikasi Humas sebelum masuk agenda.
             </p>
           </div>
-          <div className="flex gap-2.5 shrink-0">
+          <div className="flex flex-wrap gap-2.5">
             <button
               type="button"
-              onClick={() => setTab("form")}
-              className="px-4 py-2.5 rounded-lg bg-accent-500 hover:bg-accent-400 text-navy-900 font-semibold text-sm transition-colors"
+              onClick={() => setFormDate(data?.today ?? "")}
+              className="px-4 py-2.5 rounded-lg bg-accent-500 hover:bg-accent-400 text-navy-900 text-sm font-semibold transition-colors"
             >
-              Ajukan Liputan
+              Ajukan liputan
             </button>
-            <button
-              type="button"
-              onClick={() => setTab("calendar")}
-              className="px-4 py-2.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-white font-medium text-sm transition-colors"
+            <a
+              href="#kalender"
+              className="px-4 py-2.5 rounded-lg border border-white/20 dark:border-line bg-white/5 dark:bg-surface-2 text-sm font-medium text-white dark:text-ink-2 hover:bg-white/10 dark:hover:bg-surface-3 transition-colors"
             >
-              Lihat Jadwal
-            </button>
+              Lihat jadwal
+            </a>
           </div>
         </div>
-        <div className="px-5 sm:px-7 py-2.5 bg-navy-900/50 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-300">
-          <span>
-            Ketentuan: <strong className="text-white font-semibold">maksimal order H-1</strong>. Permohonan hari H
-            tetap diproses dengan prioritas agenda resmi.
-          </span>
-          <span>
-            Agenda hari ini:{" "}
-            <strong className="text-white font-semibold">{data?.todayApprovedCount ?? 0} disetujui</strong>
-          </span>
-        </div>
+
+        <dl className="grid grid-cols-2 sm:grid-cols-3 border-t border-white/10 dark:border-line divide-x divide-white/10 dark:divide-line">
+          <div className="px-5 sm:px-8 py-3.5">
+            <dt className="text-[11px] uppercase tracking-[0.1em] text-slate-400 dark:text-muted">
+              Disetujui hari ini
+            </dt>
+            <dd className="mt-0.5 text-lg font-semibold text-white dark:text-ink">
+              {data?.todayApprovedCount ?? 0}
+            </dd>
+          </div>
+          <div className="px-5 sm:px-8 py-3.5">
+            <dt className="text-[11px] uppercase tracking-[0.1em] text-slate-400 dark:text-muted">
+              Agenda mendatang
+            </dt>
+            <dd className="mt-0.5 text-lg font-semibold text-white dark:text-ink">{upcomingCount}</dd>
+          </div>
+          <div className="col-span-2 sm:col-span-1 px-5 sm:px-8 py-3.5">
+            <dt className="text-[11px] uppercase tracking-[0.1em] text-slate-400 dark:text-muted">Ketentuan</dt>
+            <dd className="mt-0.5 text-sm font-medium text-white dark:text-ink">Maksimal order H-1</dd>
+          </div>
+        </dl>
       </section>
 
       {error && (
         <div
           role="alert"
-          className="p-4 rounded-xl border border-rose-300 bg-rose-50 text-rose-800 text-sm"
+          className="p-4 rounded-xl border border-rose-200 bg-rose-50 text-sm text-rose-800 dark:border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-200"
         >
           {error}
         </div>
       )}
 
-      <div className="bg-slate-200 p-1 rounded-lg max-w-sm mx-auto flex border border-slate-300">
-        <button
-          type="button"
-          onClick={() => setTab("calendar")}
-          aria-pressed={tab === "calendar"}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-colors ${
-            tab === "calendar" ? "bg-white text-navy-800 shadow-sm" : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          Jadwal &amp; Kalender
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("form")}
-          aria-pressed={tab === "form"}
-          className={`flex-1 py-2 px-3 rounded-md text-sm font-semibold transition-colors ${
-            tab === "form" ? "bg-white text-navy-800 shadow-sm" : "text-slate-600 hover:text-slate-900"
-          }`}
-        >
-          Form Pengajuan
-        </button>
+      <div id="kalender">
+        <PortalCalendar data={data} events={events} onPickDate={setFormDate} />
       </div>
 
-      {tab === "calendar" ? (
-        <PortalCalendar data={data} events={events} onPickDate={pickDate} />
-      ) : (
-        <PortalForm
-          data={data}
-          pickedDate={pickedDate}
-          onBack={() => setTab("calendar")}
-          onSubmitted={load}
-        />
-      )}
+      <Dialog
+        open={formDate !== null}
+        onClose={() => setFormDate(null)}
+        labelledBy="form-title"
+        size="lg"
+      >
+        {formDate !== null && (
+          <PortalForm
+            key={formDate}
+            data={data}
+            initialDate={formDate}
+            onClose={() => setFormDate(null)}
+            onSubmitted={load}
+          />
+        )}
+      </Dialog>
     </div>
   );
 }

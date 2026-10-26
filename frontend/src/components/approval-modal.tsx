@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import type { OrderDetail } from "@/lib/types";
+import { Dialog } from "./dialog";
 
 interface Props {
   id: number;
@@ -30,14 +31,6 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
       })
       .catch(() => setLoadError("Gagal mengambil data permohonan."));
   }, [id]);
-
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -69,80 +62,76 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
     }
   }
 
-  return (
-    <div
-      className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      role="presentation"
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="approval-title"
-        className="bg-white rounded-2xl shadow-xl max-w-lg w-full border border-slate-200 overflow-hidden max-h-[90vh] flex flex-col"
-      >
-        <div className="bg-navy-800 text-white px-5 py-4 flex items-start justify-between gap-3 shrink-0">
-          <div>
-            <h2 id="approval-title" className="text-sm font-bold">
-              Verifikasi Permohonan
-            </h2>
-            <p className="text-xs text-slate-300 mt-0.5">
-              {detail ? `Kode ${detail.order.KodeBooking}` : "Memuat..."}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Tutup"
-            className="p-1 rounded text-slate-300 hover:text-white transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+  const inputClass =
+    "w-full px-3 py-2 rounded-lg bg-surface border border-line text-sm text-ink placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition";
 
-        {loadError ? (
-          <div className="p-6 text-sm text-rose-700">{loadError}</div>
-        ) : !detail ? (
-          <div className="p-6 text-sm text-slate-500">Memuat data...</div>
-        ) : (
-          <form onSubmit={handleSubmit} className="overflow-y-auto p-5 space-y-4 text-sm">
+  return (
+    <Dialog open onClose={onClose} labelledBy="approval-title" size="md">
+      <div className="px-5 py-4 border-b border-line flex items-start justify-between gap-3">
+        <div>
+          <h2 id="approval-title" className="text-sm font-semibold text-ink">
+            Verifikasi permohonan
+          </h2>
+          <p className="text-xs text-muted mt-0.5">
+            {detail ? `Kode ${detail.order.KodeBooking}` : "Memuat..."}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Tutup"
+          className="p-1.5 rounded-lg text-muted hover:text-ink hover:bg-surface-2 transition-colors"
+        >
+          <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      {loadError ? (
+        <div className="p-6 text-sm text-rose-700 dark:text-rose-300">{loadError}</div>
+      ) : !detail ? (
+        <div className="p-6 text-sm text-muted">Memuat data...</div>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <div className="overflow-y-auto px-5 py-5 space-y-4 text-sm">
             {formError && (
-              <div role="alert" className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-sm">
+              <div
+                role="alert"
+                className="p-3 rounded-lg border border-rose-200 bg-rose-50 text-sm text-rose-800 dark:border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-200"
+              >
                 {formError}
               </div>
             )}
 
-            <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
-              <p className="font-semibold text-slate-900">{detail.order.NamaKegiatan}</p>
-              <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-600">
+            <div className="rounded-lg border border-line bg-surface-2 p-3.5 space-y-2">
+              <p className="font-semibold text-ink leading-snug">{detail.order.NamaKegiatan}</p>
+              <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-muted">
                 <div>
-                  Pemohon: <strong className="text-slate-900">{detail.order.NamaPemohon}</strong>
+                  Pemohon <strong className="block text-ink-2 font-medium">{detail.order.NamaPemohon}</strong>
                 </div>
                 <div>
-                  Tanggal: <strong className="text-slate-900">{detail.tanggal_formatted}</strong>
+                  Tanggal <strong className="block text-ink-2 font-medium">{detail.tanggal_formatted}</strong>
                 </div>
                 <div>
-                  Kategori: <strong className="text-slate-900">{detail.order.Kategori}</strong>
+                  Kategori <strong className="block text-ink-2 font-medium">{detail.order.Kategori}</strong>
                 </div>
                 <div>
-                  Waktu: <strong className="text-slate-900">{detail.waktu_mulai_formatted} WIB</strong>
+                  Waktu{" "}
+                  <strong className="block text-ink-2 font-medium">
+                    {detail.waktu_mulai_formatted} WIB
+                  </strong>
                 </div>
               </dl>
-              <p className="text-xs text-slate-500 pt-1.5 border-t border-slate-200">
-                {detail.order.JenisPublikasi}
-              </p>
-              <div className="flex items-center justify-between pt-1.5 border-t border-slate-200 text-xs">
-                <span className="font-mono text-slate-500">WA: {detail.order.NoWhatsapp}</span>
+              <p className="text-xs text-muted pt-2 border-t border-line">{detail.order.JenisPublikasi}</p>
+              <div className="flex items-center justify-between gap-3 pt-2 border-t border-line">
+                <span className="font-mono text-xs text-muted">WA {detail.order.NoWhatsapp}</span>
                 {detail.file_url && (
                   <a
                     href={detail.file_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-2 py-1 rounded bg-slate-200 hover:bg-slate-300 text-slate-700 font-medium transition-colors"
+                    className="px-2 py-1 rounded-md border border-line bg-surface hover:border-line-strong text-xs font-medium text-ink-2 transition-colors"
                   >
                     Dokumen
                   </a>
@@ -151,16 +140,28 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
             </div>
 
             <fieldset>
-              <legend className="block text-xs font-medium text-slate-600 mb-2">Keputusan</legend>
+              <legend className="block text-xs font-medium text-muted mb-2">Keputusan</legend>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { value: "approved", label: "Setujui", cls: "has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50" },
-                  { value: "rejected", label: "Tolak", cls: "has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50" },
-                  { value: "pending", label: "Pending", cls: "has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50" },
+                  {
+                    value: "approved",
+                    label: "Setujui",
+                    cls: "has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50 dark:has-[:checked]:bg-emerald-500/10",
+                  },
+                  {
+                    value: "rejected",
+                    label: "Tolak",
+                    cls: "has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50 dark:has-[:checked]:bg-rose-500/10",
+                  },
+                  {
+                    value: "pending",
+                    label: "Pending",
+                    cls: "has-[:checked]:border-amber-500 has-[:checked]:bg-amber-50 dark:has-[:checked]:bg-amber-500/10",
+                  },
                 ].map((opt) => (
                   <label
                     key={opt.value}
-                    className={`flex items-center gap-2 p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50 transition-colors text-sm font-medium ${opt.cls}`}
+                    className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border border-line bg-surface cursor-pointer hover:border-line-strong transition-colors text-sm font-medium text-ink-2 ${opt.cls}`}
                   >
                     <input
                       type="radio"
@@ -168,7 +169,7 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
                       value={opt.value}
                       checked={status === opt.value}
                       onChange={() => setStatus(opt.value)}
-                      className="w-4 h-4 accent-navy-800"
+                      className="w-4 h-4 accent-brand"
                     />
                     <span>{opt.label}</span>
                   </label>
@@ -177,22 +178,22 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
             </fieldset>
 
             <div>
-              <label htmlFor="waktu_disetujui" className="block text-xs font-medium text-slate-600 mb-1">
+              <label htmlFor="waktu_disetujui" className="block text-xs font-medium text-muted mb-1.5">
                 Jam final liputan
               </label>
-              <p className="text-xs text-slate-400 mb-1.5">Ubah jika jadwal disesuaikan dari permohonan awal.</p>
               <input
                 id="waktu_disetujui"
                 type="time"
                 value={waktu}
                 onChange={(e) => setWaktu(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-navy-600 focus:ring-2 focus:ring-navy-600/15 outline-none transition"
+                className={inputClass}
               />
+              <p className="mt-1.5 text-xs text-muted">Ubah jika jadwal disesuaikan dari permohonan awal.</p>
             </div>
 
             <div>
-              <label htmlFor="catatan_admin" className="block text-xs font-medium text-slate-600 mb-1">
-                Catatan untuk pemohon <span className="font-normal text-slate-400">(opsional)</span>
+              <label htmlFor="catatan_admin" className="block text-xs font-medium text-muted mb-1.5">
+                Catatan untuk pemohon <span className="font-normal">(opsional)</span>
               </label>
               <textarea
                 id="catatan_admin"
@@ -200,24 +201,26 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
                 value={catatan}
                 onChange={(e) => setCatatan(e.target.value)}
                 placeholder="Contoh: Petugas fotografer Bpk. Dani"
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:border-navy-600 focus:ring-2 focus:ring-navy-600/15 outline-none transition resize-none"
+                className={`${inputClass} resize-none`}
               />
             </div>
+          </div>
 
-            <div className="pt-2 border-t border-slate-100 space-y-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="w-full py-2.5 rounded-lg bg-navy-800 hover:bg-navy-700 disabled:opacity-60 text-white font-semibold text-sm transition-colors"
-              >
-                {saving ? "Memproses..." : "Simpan dan kirim WhatsApp"}
-              </button>
+          <div className="px-5 py-3.5 border-t border-line space-y-2">
+            <button
+              type="submit"
+              disabled={saving}
+              className="w-full py-2.5 rounded-lg bg-brand hover:brightness-110 disabled:opacity-60 text-white text-sm font-semibold transition"
+            >
+              {saving ? "Memproses..." : "Simpan dan kirim WhatsApp"}
+            </button>
+            <div className="flex gap-2">
               {detail.manual_wa_link && (
                 <a
                   href={detail.manual_wa_link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium text-xs transition-colors flex items-center justify-center"
+                  className="flex-1 py-2 rounded-lg border border-line bg-surface-2 hover:border-line-strong text-xs font-medium text-ink-2 transition-colors text-center"
                 >
                   Kirim manual via WhatsApp
                 </a>
@@ -226,14 +229,14 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
                 type="button"
                 onClick={handleDelete}
                 disabled={saving}
-                className="w-full py-2 rounded-lg text-rose-600 hover:bg-rose-50 font-medium text-xs transition-colors"
+                className="flex-1 py-2 rounded-lg border border-line hover:border-rose-300 hover:bg-rose-50 dark:hover:bg-rose-500/10 text-xs font-medium text-rose-600 dark:text-rose-300 transition-colors"
               >
                 Hapus permohonan
               </button>
             </div>
-          </form>
-        )}
-      </div>
-    </div>
+          </div>
+        </form>
+      )}
+    </Dialog>
   );
 }

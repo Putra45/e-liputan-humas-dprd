@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --canvas: #f4f6f9;
+  --surface: #ffffff;
+  --surface-2: #f7f9fc;
+  --surface-3: #eef2f7;
+  --line: #dfe5ee;
+  --line-strong: #c8d3e2;
+  --ink: #0e1b2c;
+  --ink-2: #33445c;
+  --muted: #64748b;
+  --brand: #0f2e5a;
+  --brand-soft: #eef3fa;
+}
+
+.dark {
+  --canvas: #0a1220;
+  --surface: #101b2d;
+  --surface-2: #14213a;
+  --surface-3: #1a2942;
+  --line: #22324e;
+  --line-strong: #2f435f;
+  --ink: #e8eef7;
+  --ink-2: #c3cfe0;
+  --muted: #8ea1b9;
+  --brand: #17395f;
+  --brand-soft: #142338;
+}
+
 @theme inline {
   --color-navy-50: #f0f4fa;
   --color-navy-100: #dce4f2;
@@ -11,28 +41,93 @@
   --color-accent-400: #fbbf24;
   --color-accent-500: #f59e0b;
   --color-accent-600: #d97706;
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
   --font-sans: var(--font-jakarta);
+}
+
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
 }
 
 body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* FullCalendar v7 themes only through its palette variables */
-html .fc {
+::selection {
+  background: #fde68a;
+  color: #0e1b2c;
+}
+
+/* FullCalendar v7 renders no .fc root, so scope its palette to our wrapper */
+.eliputan-cal {
   --fc-classic-primary: #0f2e5a;
   --fc-classic-primary-foreground: #ffffff;
-  --fc-classic-button: #0f2e5a;
-  --fc-classic-button-border: #0f2e5a;
-  --fc-classic-button-strong: #0a1d37;
-  --fc-classic-button-strong-border: #0a1d37;
+  --fc-classic-button: var(--brand);
+  --fc-classic-button-border: var(--brand);
+  --fc-classic-button-strong: var(--brand);
+  --fc-classic-button-strong-border: var(--brand);
   --fc-classic-button-outline: #0f2e5a66;
-  --fc-classic-border: #e2e8f0;
-  --fc-classic-today: #fffbeb;
-  --fc-classic-faint: #f8fafc;
-  --fc-classic-muted: #f1f5f9;
-  --fc-classic-foreground: #0f172a;
-  --fc-classic-muted-foreground: #64748b;
+  --fc-classic-border: var(--line);
+  --fc-classic-faint: var(--surface-2);
+  --fc-classic-muted: var(--surface-3);
+  --fc-classic-background: var(--surface);
+  --fc-classic-foreground: var(--ink);
+  --fc-classic-muted-foreground: var(--muted);
+  --fc-classic-today: #fff6e5;
   font-size: 0.875rem;
 }
 
+html.dark .eliputan-cal {
+  --fc-classic-today: #f59e0b1a;
+  --fc-classic-highlight: #f59e0b1f;
+  --fc-classic-button-outline: #93a9c480;
+}
+
+/* Soft day cells */
+.eliputan-cal .eliputan-day {
+  border-radius: 8px;
+  transition: background-color 140ms ease;
+}
+.eliputan-cal .eliputan-day.is-weekend {
+  background: var(--surface-2);
+}
+.eliputan-cal .eliputan-day.is-past {
+  opacity: 0.55;
+}
+.eliputan-cal .eliputan-day:hover {
+  background: var(--surface-3);
+  cursor: pointer;
+}
+.eliputan-cal .eliputan-day.is-today:hover {
+  background: var(--fc-classic-today);
+}
+
+/* Weekend header tint */
+.eliputan-cal .eliputan-weekend-head {
+  background: var(--surface-2);
+}
+
+/* Event pills */
+.eliputan-cal .eliputan-event {
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+  padding: 1px 4px;
+  overflow: hidden;
+}
+.eliputan-cal .eliputan-event:hover {
+  filter: brightness(0.94);
+}

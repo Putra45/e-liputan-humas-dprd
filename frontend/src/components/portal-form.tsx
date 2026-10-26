@@ -6,8 +6,8 @@ import type { PortalData } from "@/lib/types";
 
 interface Props {
   data: PortalData | null;
-  pickedDate: string;
-  onBack: () => void;
+  initialDate: string;
+  onClose: () => void;
   onSubmitted: () => void;
 }
 
@@ -19,8 +19,14 @@ interface Success {
   waLink: string;
 }
 
-export function PortalForm({ data, pickedDate, onBack, onSubmitted }: Props) {
-  const [tanggal, setTanggal] = useState(pickedDate);
+const fieldClass =
+  "w-full px-3.5 py-2.5 rounded-lg bg-surface border border-line text-sm text-ink placeholder:text-muted focus:border-brand focus:ring-2 focus:ring-brand/20 outline-none transition";
+
+const chipClass =
+  "px-2 py-1 rounded-md bg-surface-2 border border-line hover:border-line-strong text-xs font-medium text-ink-2 transition-colors";
+
+export function PortalForm({ data, initialDate, onClose, onSubmitted }: Props) {
+  const [tanggal, setTanggal] = useState(initialDate);
   const [waktu, setWaktu] = useState("09:00");
   const [fileName, setFileName] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
@@ -42,8 +48,7 @@ export function PortalForm({ data, pickedDate, onBack, onSubmitted }: Props) {
     setSubmitting(true);
     try {
       await ensureCsrf();
-      const form = new FormData(e.currentTarget);
-      const result = await api.createOrder(form);
+      const result = await api.createOrder(new FormData(e.currentTarget));
       setSuccess(result);
       onSubmitted();
     } catch (err) {
@@ -55,245 +60,224 @@ export function PortalForm({ data, pickedDate, onBack, onSubmitted }: Props) {
 
   if (success) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-2xl border border-emerald-300 overflow-hidden">
-          <div className="p-6 border-b border-emerald-100 bg-emerald-50">
-            <h2 className="text-base font-bold text-emerald-900">Permohonan berhasil dikirim</h2>
-            <p className="text-sm text-emerald-800 mt-1">
-              Status saat ini menunggu konfirmasi tim Humas &amp; Protokol.
+      <>
+        <div className="px-5 py-4 border-b border-line">
+          <h2 id="form-title" className="text-base font-semibold text-ink">
+            Permohonan terkirim
+          </h2>
+          <p className="text-xs text-muted mt-0.5">Menunggu konfirmasi tim Humas &amp; Protokol.</p>
+        </div>
+        <div className="p-5 space-y-4 overflow-y-auto">
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 dark:border-emerald-500/25 dark:bg-emerald-500/10 px-4 py-3">
+            <p className="text-xs text-emerald-700 dark:text-emerald-300">Kode booking</p>
+            <p className="font-mono text-lg font-semibold text-emerald-900 dark:text-emerald-200 select-all">
+              {success.kode}
             </p>
           </div>
-          <div className="p-6 space-y-3 text-sm">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-slate-500">Kode booking</span>
-              <strong className="font-mono text-base bg-slate-100 border border-slate-200 rounded px-2 py-0.5 select-all">
-                {success.kode}
-              </strong>
+          <dl className="space-y-2.5 text-sm">
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">Kegiatan</dt>
+              <dd className="font-medium text-ink text-right max-w-[65%]">{success.kegiatan}</dd>
             </div>
-            <dl className="space-y-2 text-slate-700">
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Kegiatan</dt>
-                <dd className="font-medium text-slate-900 text-right">{success.kegiatan}</dd>
-              </div>
-              <div className="flex justify-between gap-4">
-                <dt className="text-slate-500">Jadwal</dt>
-                <dd className="font-medium text-slate-900 text-right">
-                  {success.tanggal} &middot; {success.waktu} WIB
-                </dd>
-              </div>
-            </dl>
-            <div className="flex flex-wrap gap-2 pt-2">
-              <a
-                href={success.waLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors"
-              >
-                Konfirmasi via WhatsApp
-              </a>
-              <button
-                type="button"
-                onClick={onBack}
-                className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium transition-colors"
-              >
-                Lihat kalender
-              </button>
+            <div className="flex justify-between gap-4">
+              <dt className="text-muted">Jadwal</dt>
+              <dd className="font-medium text-ink text-right">
+                {success.tanggal} &middot; {success.waktu} WIB
+              </dd>
             </div>
-          </div>
+          </dl>
+          <p className="text-xs text-muted leading-relaxed">
+            Simpan kode booking ini. Konfirmasi dan penyesuaian jadwal dikirim ke nomor WhatsApp yang kamu
+            daftarkan.
+          </p>
         </div>
-      </div>
+        <div className="px-5 py-3.5 border-t border-line flex flex-wrap gap-2">
+          <a
+            href={success.waLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 min-w-[180px] text-center px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors"
+          >
+            Konfirmasi via WhatsApp
+          </a>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2.5 rounded-lg bg-surface-2 border border-line hover:border-line-strong text-ink-2 text-sm font-medium transition-colors"
+          >
+            Tutup
+          </button>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4">
-      {pickedDate && (
-        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between gap-3 text-sm">
-          <span className="text-emerald-800">
-            Tanggal dipilih dari kalender: <strong className="font-semibold">{pickedDate}</strong>
-          </span>
-          <button
-            type="button"
-            onClick={() => document.getElementById("nama_kegiatan")?.focus()}
-            className="text-xs font-semibold text-emerald-800 underline underline-offset-2 hover:text-emerald-900"
-          >
-            Lanjut isi
-          </button>
+    <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+      <div className="px-5 py-4 border-b border-line flex items-start justify-between gap-3">
+        <div>
+          <h2 id="form-title" className="text-base font-semibold text-ink">
+            Formulir pengajuan liputan
+          </h2>
+          <p className="text-xs text-muted mt-0.5">Lengkapi data agenda kedewanan di bawah ini.</p>
         </div>
-      )}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Tutup formulir"
+          className="p-1.5 rounded-lg text-muted hover:text-ink hover:bg-surface-2 transition-colors"
+        >
+          <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white rounded-2xl border border-slate-200 overflow-hidden"
-      >
-        <div className="px-5 sm:px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-base font-bold text-slate-900">Formulir Pengajuan Liputan</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Lengkapi data permohonan kegiatan kedewanan.</p>
+      <div className="overflow-y-auto px-5 py-5 space-y-6">
+        {errors.length > 0 && (
+          <div
+            role="alert"
+            className="p-3 rounded-lg border border-rose-200 bg-rose-50 text-sm text-rose-800 dark:border-rose-500/25 dark:bg-rose-500/10 dark:text-rose-200"
+          >
+            <p className="font-semibold mb-1">Mohon periksa kembali</p>
+            <ul className="list-disc list-inside space-y-0.5">
+              {errors.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
           </div>
-          <button
-            type="button"
-            onClick={onBack}
-            className="hidden sm:inline-flex items-center gap-1 text-sm font-medium text-slate-500 hover:text-navy-800 transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Kalender
-          </button>
-        </div>
+        )}
 
-        <div className="p-5 sm:p-6 space-y-7">
-          {errors.length > 0 && (
-            <div role="alert" className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-sm text-rose-800">
-              <p className="font-semibold mb-1">Mohon periksa kembali:</p>
-              <ul className="list-disc list-inside space-y-0.5">
-                {errors.map((e) => (
-                  <li key={e}>{e}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+        <fieldset className="space-y-4">
+          <legend className="w-full pb-2 border-b border-line text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+            Detail agenda
+          </legend>
 
-          <fieldset className="space-y-4">
-            <legend className="flex items-center gap-2 pb-2 border-b border-slate-200 w-full">
-              <span className="w-6 h-6 rounded bg-navy-800 text-white text-xs font-bold flex items-center justify-center">
-                1
-              </span>
-              <span className="text-sm font-bold text-slate-900">Detail Agenda</span>
-            </legend>
+          <div>
+            <label htmlFor="nama_kegiatan" className="block text-sm font-medium text-ink-2 mb-1.5">
+              Nama kegiatan <span className="text-rose-500">*</span>
+            </label>
+            <input
+              id="nama_kegiatan"
+              name="nama_kegiatan"
+              required
+              autoFocus
+              placeholder="Contoh: Rapat Dengar Pendapat Komisi II"
+              className={fieldClass}
+            />
+          </div>
 
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="nama_kegiatan" className="block text-sm font-medium text-slate-700 mb-1">
-                Nama kegiatan <span className="text-rose-500">*</span>
+              <label htmlFor="tanggal_kegiatan" className="block text-sm font-medium text-ink-2 mb-1.5">
+                Tanggal <span className="text-rose-500">*</span>
               </label>
               <input
-                id="nama_kegiatan"
-                name="nama_kegiatan"
+                id="tanggal_kegiatan"
+                name="tanggal_kegiatan"
+                type="date"
                 required
-                placeholder="Contoh: Rapat Dengar Pendapat Komisi II"
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-navy-600 focus:ring-2 focus:ring-navy-600/15 outline-none transition"
+                min={today}
+                value={tanggal}
+                onChange={(e) => setTanggal(e.target.value)}
+                className={fieldClass}
               />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="tanggal_kegiatan" className="block text-sm font-medium text-slate-700 mb-1">
-                  Tanggal <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  id="tanggal_kegiatan"
-                  name="tanggal_kegiatan"
-                  type="date"
-                  required
-                  min={today}
-                  value={tanggal}
-                  onChange={(e) => setTanggal(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-navy-600 focus:ring-2 focus:ring-navy-600/15 outline-none transition"
-                />
-                <div className="flex gap-1.5 mt-1.5 text-xs">
-                  <button type="button" onClick={() => quickDate(0)} className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition-colors">
-                    Hari ini
-                  </button>
-                  <button type="button" onClick={() => quickDate(1)} className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition-colors">
-                    Besok
-                  </button>
-                  <button type="button" onClick={() => quickDate(2)} className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition-colors">
-                    Lusa
-                  </button>
-                </div>
-                {isToday && (
-                  <p className="mt-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
-                    Pemesanan hari H tetap diproses, dengan prioritas agenda resmi.
-                  </p>
-                )}
+              <div className="flex gap-1.5 mt-2 text-xs">
+                <button type="button" onClick={() => quickDate(0)} className={chipClass}>
+                  Hari ini
+                </button>
+                <button type="button" onClick={() => quickDate(1)} className={chipClass}>
+                  Besok
+                </button>
+                <button type="button" onClick={() => quickDate(2)} className={chipClass}>
+                  Lusa
+                </button>
               </div>
-
-              <div>
-                <label htmlFor="waktu_mulai" className="block text-sm font-medium text-slate-700 mb-1">
-                  Waktu mulai <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  id="waktu_mulai"
-                  name="waktu_mulai"
-                  type="time"
-                  required
-                  value={waktu}
-                  onChange={(e) => setWaktu(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-navy-600 focus:ring-2 focus:ring-navy-600/15 outline-none transition"
-                />
-                <div className="flex gap-1.5 mt-1.5 text-xs">
-                  {["09:00", "10:00", "13:30", "19:00"].map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setWaktu(t)}
-                      className="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium transition-colors"
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {isToday && (
+                <p className="mt-2 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/25 rounded-md px-2 py-1.5">
+                  Pemesanan hari H tetap diproses, dengan prioritas agenda resmi.
+                </p>
+              )}
             </div>
 
             <div>
-              <span className="block text-sm font-medium text-slate-700 mb-2">
-                Kategori agenda <span className="text-rose-500">*</span>
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {(data?.kategoriList ?? []).map((k, i) => (
-                  <label
-                    key={k}
-                    className="flex items-center gap-2.5 p-3 rounded-lg border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors has-[:checked]:border-navy-600 has-[:checked]:bg-navy-50 text-sm font-medium text-slate-700"
-                  >
-                    <input
-                      type="radio"
-                      name="kategori"
-                      value={k}
-                      defaultChecked={i === 0}
-                      className="w-4 h-4 accent-navy-800"
-                    />
-                    <span>{k}</span>
-                  </label>
+              <label htmlFor="waktu_mulai" className="block text-sm font-medium text-ink-2 mb-1.5">
+                Waktu mulai <span className="text-rose-500">*</span>
+              </label>
+              <input
+                id="waktu_mulai"
+                name="waktu_mulai"
+                type="time"
+                required
+                value={waktu}
+                onChange={(e) => setWaktu(e.target.value)}
+                className={fieldClass}
+              />
+              <div className="flex gap-1.5 mt-2 text-xs">
+                {["09:00", "10:00", "13:30", "19:00"].map((t) => (
+                  <button key={t} type="button" onClick={() => setWaktu(t)} className={chipClass}>
+                    {t}
+                  </button>
                 ))}
               </div>
             </div>
+          </div>
 
-            <div>
-              <span className="block text-sm font-medium text-slate-700 mb-2">
-                Jenis publikasi <span className="text-rose-500">*</span>
-              </span>
-              <div className="space-y-2">
-                {(data?.jenisPublikasiList ?? []).map((j, i) => (
-                  <label
-                    key={j}
-                    className="flex items-start gap-2.5 p-3 rounded-lg border border-slate-300 hover:bg-slate-50 cursor-pointer transition-colors has-[:checked]:border-navy-600 has-[:checked]:bg-navy-50 text-sm text-slate-700"
-                  >
-                    <input
-                      type="radio"
-                      name="jenis_publikasi"
-                      value={j}
-                      defaultChecked={i === 0}
-                      className="mt-0.5 w-4 h-4 accent-navy-800"
-                    />
-                    <span>{j}</span>
-                  </label>
-                ))}
-              </div>
+          <div>
+            <span className="block text-sm font-medium text-ink-2 mb-2">
+              Kategori agenda <span className="text-rose-500">*</span>
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {(data?.kategoriList ?? []).map((k, i) => (
+                <label
+                  key={k}
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-line bg-surface cursor-pointer hover:border-line-strong has-[:checked]:border-brand has-[:checked]:bg-brand-soft dark:has-[:checked]:bg-surface-2 transition-colors text-sm text-ink-2"
+                >
+                  <input
+                    type="radio"
+                    name="kategori"
+                    value={k}
+                    defaultChecked={i === 0}
+                    className="w-4 h-4 accent-brand"
+                  />
+                  <span>{k}</span>
+                </label>
+              ))}
             </div>
-          </fieldset>
+          </div>
 
-          <fieldset className="space-y-4">
-            <legend className="flex items-center gap-2 pb-2 border-b border-slate-200 w-full">
-              <span className="w-6 h-6 rounded bg-navy-800 text-white text-xs font-bold flex items-center justify-center">
-                2
-              </span>
-              <span className="text-sm font-bold text-slate-900">Data Pemohon</span>
-            </legend>
+          <div>
+            <span className="block text-sm font-medium text-ink-2 mb-2">
+              Jenis publikasi <span className="text-rose-500">*</span>
+            </span>
+            <div className="space-y-2">
+              {(data?.jenisPublikasiList ?? []).map((j, i) => (
+                <label
+                  key={j}
+                  className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg border border-line bg-surface cursor-pointer hover:border-line-strong has-[:checked]:border-brand has-[:checked]:bg-brand-soft dark:has-[:checked]:bg-surface-2 transition-colors text-sm text-ink-2"
+                >
+                  <input
+                    type="radio"
+                    name="jenis_publikasi"
+                    value={j}
+                    defaultChecked={i === 0}
+                    className="mt-0.5 w-4 h-4 accent-brand"
+                  />
+                  <span>{j}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </fieldset>
 
+        <fieldset className="space-y-4">
+          <legend className="w-full pb-2 border-b border-line text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+            Data pemohon
+          </legend>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="nama_pemohon" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="nama_pemohon" className="block text-sm font-medium text-ink-2 mb-1.5">
                 Nama pemohon <span className="text-rose-500">*</span>
               </label>
               <input
@@ -301,12 +285,12 @@ export function PortalForm({ data, pickedDate, onBack, onSubmitted }: Props) {
                 name="nama_pemohon"
                 required
                 placeholder="Contoh: H. Rusdi Alam, M.Si"
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-navy-600 focus:ring-2 focus:ring-navy-600/15 outline-none transition"
+                className={fieldClass}
               />
             </div>
 
             <div>
-              <label htmlFor="no_whatsapp" className="block text-sm font-medium text-slate-700 mb-1">
+              <label htmlFor="no_whatsapp" className="block text-sm font-medium text-ink-2 mb-1.5">
                 Nomor WhatsApp <span className="text-rose-500">*</span>
               </label>
               <input
@@ -317,67 +301,64 @@ export function PortalForm({ data, pickedDate, onBack, onSubmitted }: Props) {
                 minLength={9}
                 maxLength={20}
                 placeholder="081234567890"
-                className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm font-mono focus:border-navy-600 focus:ring-2 focus:ring-navy-600/15 outline-none transition"
+                className={`${fieldClass} font-mono`}
               />
-              <p className="mt-1 text-xs text-slate-500">
-                Konfirmasi ACC dan jadwal tim dikirim ke nomor ini.
-              </p>
+              <p className="mt-1.5 text-xs text-muted">Konfirmasi ACC dikirim ke nomor ini.</p>
             </div>
-          </fieldset>
-
-          <fieldset className="space-y-3">
-            <legend className="flex items-center gap-2 pb-2 border-b border-slate-200 w-full">
-              <span className="w-6 h-6 rounded bg-navy-800 text-white text-xs font-bold flex items-center justify-center">
-                3
-              </span>
-              <span className="text-sm font-bold text-slate-900">
-                Dokumen pendukung <span className="font-normal text-slate-400">(opsional)</span>
-              </span>
-            </legend>
-
-            <div className="p-5 border border-dashed border-slate-300 rounded-lg hover:border-navy-400 transition-colors text-center bg-slate-50/60">
-              <input
-                type="file"
-                name="file_dokumen"
-                id="file_dokumen"
-                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                className="sr-only"
-                onChange={(e) => setFileName(e.target.files?.[0]?.name ?? "")}
-              />
-              <label htmlFor="file_dokumen" className="cursor-pointer flex flex-col items-center gap-1.5">
-                <svg className="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                  />
-                </svg>
-                <span className="text-sm font-medium text-slate-700">Pilih surat tugas, rundown, atau flyer</span>
-                <span className="text-xs text-slate-500">PDF, DOCX, JPG, PNG, maksimal 10 MB</span>
-                {fileName && <span className="text-xs font-semibold text-emerald-700 mt-1">{fileName}</span>}
-              </label>
-            </div>
-          </fieldset>
-
-          <div className="pt-1 space-y-2">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-3 rounded-lg bg-navy-800 hover:bg-navy-700 disabled:opacity-60 text-white font-semibold text-sm transition-colors"
-            >
-              {submitting ? "Mengirim..." : "Kirim Pengajuan Liputan"}
-            </button>
-            <button
-              type="button"
-              onClick={onBack}
-              className="w-full py-2 text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
-            >
-              Batal
-            </button>
           </div>
-        </div>
-      </form>
-    </div>
+        </fieldset>
+
+        <fieldset className="space-y-3">
+          <legend className="w-full pb-2 border-b border-line text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+            Dokumen pendukung (opsional)
+          </legend>
+
+          <div className="rounded-lg border border-dashed border-line-strong bg-surface-2 px-4 py-5 text-center hover:border-brand transition-colors">
+            <input
+              type="file"
+              name="file_dokumen"
+              id="file_dokumen"
+              accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+              className="sr-only"
+              onChange={(e) => setFileName(e.target.files?.[0]?.name ?? "")}
+            />
+            <label htmlFor="file_dokumen" className="cursor-pointer flex flex-col items-center gap-1">
+              <svg className="w-6 h-6 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.6}
+                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                />
+              </svg>
+              <span className="text-sm font-medium text-ink-2">Pilih surat tugas, rundown, atau flyer</span>
+              <span className="text-xs text-muted">PDF, DOCX, JPG, PNG &middot; maks 10 MB</span>
+              {fileName && (
+                <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300 mt-1">
+                  {fileName}
+                </span>
+              )}
+            </label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div className="px-5 py-3.5 border-t border-line flex flex-col-reverse sm:flex-row gap-2">
+        <button
+          type="button"
+          onClick={onClose}
+          className="px-4 py-2.5 rounded-lg border border-line hover:bg-surface-2 text-ink-2 text-sm font-medium transition-colors"
+        >
+          Batal
+        </button>
+        <button
+          type="submit"
+          disabled={submitting}
+          className="flex-1 py-2.5 rounded-lg bg-brand hover:brightness-110 disabled:opacity-60 text-white text-sm font-semibold transition"
+        >
+          {submitting ? "Mengirim..." : "Kirim pengajuan"}
+        </button>
+      </div>
+    </form>
   );
 }
