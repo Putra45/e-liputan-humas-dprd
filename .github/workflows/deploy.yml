@@ -3,7 +3,10 @@ name: Deploy to VPS
 on:
   push:
     branches: [main]
-    paths: ['go-eliputan/**']
+    paths:
+      - 'go-eliputan/**'
+      - 'frontend/**'
+      - '.github/workflows/deploy.yml'
 
 jobs:
   deploy:
@@ -16,12 +19,20 @@ jobs:
           username: root
           password: ${{ secrets.VPS_PASSWORD }}
           script: |
+            set -e
             export PATH=$PATH:/usr/local/go/bin
-            cd /www/wwwroot/liputan.172.235.246.16.nip.io
+            APP=/www/wwwroot/liputan.172.235.246.16.nip.io
+            cd "$APP"
             git fetch origin main
             git reset --hard origin/main
-            cd go-eliputan
+
+            cd "$APP/go-eliputan"
             CGO_ENABLED=0 go build -ldflags="-s -w" -o /usr/local/bin/eliputan .
-            chown -R www:www .
             systemctl restart eliputan
+
+            cd "$APP/frontend"
+            npm ci
+            NEXT_PUBLIC_API_URL=http://127.0.0.1:8080 npm run build
+            chown -R www:www "$APP/frontend" "$APP/go-eliputan"
+            systemctl restart eliputan-web
             echo "Deploy done: $(date)"

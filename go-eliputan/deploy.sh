@@ -2,6 +2,7 @@
 # ============================================================
 # E-LIPUTAN DPRD — Auto Deploy Script untuk aaPanel (Ubuntu)
 # Domain: liputan.172.235.246.16.nip.io
+# Stack : Go API (8080) + Next.js (3000) di belakang Nginx
 # ============================================================
 # Jalankan di VPS sebagai root:
 #   bash deploy.sh
@@ -12,37 +13,43 @@ set -e
 DOMAIN="liputan.172.235.246.16.nip.io"
 APP_DIR="/www/wwwroot/${DOMAIN}"
 SERVICE_NAME="eliputan"
+WEB_SERVICE_NAME="eliputan-web"
 REPO="https://github.com/Putra45/e-liputan-humas-dprd.git"
 GO_VERSION="1.23.6"
+NODE_MAJOR=22
 PORT=8080
+WEB_PORT=3000
 
 echo "=========================================="
 echo " E-Liputan DPRD — Deploy ke aaPanel VPS"
 echo "=========================================="
 
-# 1. Install Go jika belum ada
+# 1. Go
 if ! command -v go &>/dev/null; then
-    echo "[1/7] Installing Go ${GO_VERSION}..."
+    echo "[1/8] Installing Go ${GO_VERSION}..."
     cd /tmp
     wget -q "https://go.dev/dl/go${GO_VERSION}.linux-amd64.tar.gz"
     rm -rf /usr/local/go
     tar -C /usr/local -xzf "go${GO_VERSION}.linux-amd64.tar.gz"
     rm -f "go${GO_VERSION}.linux-amd64.tar.gz"
-
-    # Add to PATH permanently
-    if ! grep -q '/usr/local/go/bin' /etc/profile; then
-        echo 'export PATH=$PATH:/usr/local/go/bin' >> /etc/profile
-    fi
-    export PATH=$PATH:/usr/local/go/bin
-    echo "  Go $(go version) installed."
+    grep -q '/usr/local/go/bin' /etc/profile || echo 'export PATH=$PATH:/usr/local/go/bin' >> /etc/profile
 else
-    echo "[1/7] Go already installed: $(go version)"
+    echo "[1/8] Go already installed: $(go version)"
 fi
-
 export PATH=$PATH:/usr/local/go/bin
 
-# 2. Clone atau pull repo
-echo "[2/7] Syncing from GitHub..."
+# 2. Node.js (Next.js 16 butuh Node >= 20)
+NODE_BIN="$(command -v node || true)"
+if [ -z "${NODE_BIN}" ] || [ "$(node -v | sed 's/v\([0-9]*\).*/\1/')" -lt 20 ]; then
+    echo "[2/8] Installing Node.js ${NODE_MAJOR}.x..."
+    curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash -
+    apt-get install -y nodejs
+else
+    echo "[2/8] Node already installed: $(node -v)"
+fi
+
+# 3. Sync repo
+echo "[3/8] Syncing from GitHub..."
 if [ -d "${APP_DIR}/.git" ]; then
     cd "${APP_DIR}"
     git fetch origin main
@@ -53,25 +60,31 @@ else
 fi
 cd "${APP_DIR}/go-eliputan"
 
-# 3. Setup .env jika belum ada
-echo "[3/7] Checking .env config..."
+# 4. .env Go
+echo "[4/8] Checking .env config..."
 if [ ! -f .env ]; then
     cp .env.example .env
-    echo "  .env created from .env.example"
-    echo "  PENTING: Edit .env untuk set WA_GATEWAY_TOKEN jika diperlukan"
+    echo "  .env created — isi WA_GATEWAY_TOKEN bila perlu"
 fi
 
-# 4. Build binary Go
-echo "[4/7] Building Go binary..."
+# 5. Build Go + Next.js
+echo "[5/8] Building Go binary..."
 CGO_ENABLED=0 go build -ldflags="-s -w" -o /usr/local/bin/eliputan .
 chmod +x /usr/local/bin/eliputan
-echo "  Binary built: $(ls -lh /usr/local/bin/eliputan | awk '{print $5}')"
 
-# 5. Create systemd service
-echo "[5/7] Creating systemd service..."
-cat > /etc/systemd/system/${SERVICE_NAME}.service << 'SERVICEEOF'
+echo "  Building Next.js..."
+cd "${APP_DIR}/frontend"
+npm ci
+NEXT_PUBLIC_API_URL="http://127.0.0.1:${PORT}" npm run build
+
+mkdir -p "${APP_DIR}/go-eliputan/uploads"
+chown -R www:www "${APP_DIR}/go-eliputan" "${APP_DIR}/frontend"
+
+# 6. systemd services
+echo "[6/8] Writing systemd services..."
+cat > /etc/systemd/system/${SERVICE_NAME}.service << SERVICEEOF
 [Unit]
-Description=E-Liputan DPRD Humas (Go)
+Description=E-Liputan DPRD Humas (Go API)
 After=network.target
 Wants=network-online.target
 
@@ -79,129 +92,138 @@ Wants=network-online.target
 Type=simple
 User=www
 Group=www
-WorkingDirectory=/www/wwwroot/liputan.172.235.246.16.nip.io/go-eliputan
+WorkingDirectory=${APP_DIR}/go-eliputan
 ExecStart=/usr/local/bin/eliputan
 Restart=always
 RestartSec=3
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=eliputan
-
-# Security hardening
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/www/wwwroot/liputan.172.235.246.16.nip.io/go-eliputan
+ReadWritePaths=${APP_DIR}/go-eliputan
 PrivateTmp=true
-
-# Environment
-Environment=PORT=8080
-Environment=DB_PATH=/www/wwwroot/liputan.172.235.246.16.nip.io/go-eliputan/eliputan.db
+Environment=PORT=${PORT}
+Environment=DB_PATH=${APP_DIR}/go-eliputan/eliputan.db
 
 [Install]
 WantedBy=multi-user.target
 SERVICEEOF
 
-# Ensure uploads dir exists and owned by www
-mkdir -p "${APP_DIR}/go-eliputan/uploads"
-chown -R www:www "${APP_DIR}/go-eliputan"
+cat > /etc/systemd/system/${WEB_SERVICE_NAME}.service << SERVICEEOF
+[Unit]
+Description=E-Liputan DPRD Humas (Next.js)
+After=network.target ${SERVICE_NAME}.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www
+Group=www
+WorkingDirectory=${APP_DIR}/frontend
+ExecStart=$(command -v node) node_modules/next/dist/bin/next start -p ${WEB_PORT}
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=eliputan-web
+Environment=NODE_ENV=production
+Environment=NEXT_PUBLIC_API_URL=http://127.0.0.1:${PORT}
+Environment=HOME=${APP_DIR}/frontend
+
+[Install]
+WantedBy=multi-user.target
+SERVICEEOF
 
 systemctl daemon-reload
-systemctl enable ${SERVICE_NAME}
+systemctl enable ${SERVICE_NAME} ${WEB_SERVICE_NAME}
 systemctl restart ${SERVICE_NAME}
+sleep 1
+systemctl restart ${WEB_SERVICE_NAME}
 sleep 2
 
-if systemctl is-active --quiet ${SERVICE_NAME}; then
-    echo "  ✅ Service ${SERVICE_NAME} running!"
-else
-    echo "  ❌ Service failed. Check: journalctl -u ${SERVICE_NAME} -n 20"
-    exit 1
-fi
+for svc in ${SERVICE_NAME} ${WEB_SERVICE_NAME}; do
+    if systemctl is-active --quiet $svc; then
+        echo "  ✅ ${svc} running"
+    else
+        echo "  ❌ ${svc} failed. Check: journalctl -u ${svc} -n 30"
+        exit 1
+    fi
+done
 
-# 6. Configure Nginx reverse proxy di aaPanel
-echo "[6/7] Configuring Nginx reverse proxy..."
-
+# 7. Nginx: Next.js di "/", Go di "/api/" dan file upload
+echo "[7/8] Configuring Nginx reverse proxy..."
 NGINX_CONF="/www/server/panel/vhost/nginx/${DOMAIN}.conf"
+[ -f "${NGINX_CONF}" ] && cp "${NGINX_CONF}" "${NGINX_CONF}.bak.$(date +%s)"
 
-# Backup existing config
-if [ -f "${NGINX_CONF}" ]; then
-    cp "${NGINX_CONF}" "${NGINX_CONF}.bak.$(date +%s)"
-fi
-
-cat > "${NGINX_CONF}" << 'NGINXEOF'
+cat > "${NGINX_CONF}" << NGINXEOF
 server {
     listen 80;
     listen [::]:80;
-    server_name liputan.172.235.246.16.nip.io;
+    server_name ${DOMAIN};
 
-    # aaPanel logs
-    access_log /www/wwwlogs/liputan.172.235.246.16.nip.io.log;
-    error_log /www/wwwlogs/liputan.172.235.246.16.nip.io.error.log;
+    access_log /www/wwwlogs/${DOMAIN}.log;
+    error_log /www/wwwlogs/${DOMAIN}.error.log;
 
-    # Security headers handled by Go app — not duplicated here
-
-    # Max upload 10MB
     client_max_body_size 10m;
 
-    # Static files served by Nginx directly (faster)
-    location /static/ {
-        alias /www/wwwroot/liputan.172.235.246.16.nip.io/go-eliputan/static/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-
     location /uploads/ {
-        alias /www/wwwroot/liputan.172.235.246.16.nip.io/go-eliputan/uploads/;
+        alias ${APP_DIR}/go-eliputan/uploads/;
         expires 7d;
     }
 
-    # Proxy to Go app
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+    location /api/ {
+        proxy_pass http://127.0.0.1:${PORT};
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
         proxy_connect_timeout 10;
         proxy_read_timeout 30;
-        proxy_send_timeout 30;
+    }
 
-        # WebSocket support (optional)
+    location / {
+        proxy_pass http://127.0.0.1:${WEB_PORT};
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_connect_timeout 10;
+        proxy_read_timeout 30;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection "upgrade";
     }
 }
 NGINXEOF
 
-# Reload Nginx
 /www/server/nginx/sbin/nginx -t && /www/server/nginx/sbin/nginx -s reload
-echo "  ✅ Nginx configured and reloaded!"
+echo "  ✅ Nginx reloaded"
 
-# 7. Test
-echo "[7/7] Testing..."
+# 8. Test
+echo "[8/8] Testing..."
 sleep 1
-HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080/ 2>/dev/null || echo "000")
+API_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${PORT}/api/portal")
+WEB_CODE=$(curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:${WEB_PORT}/")
+echo "  Go API : ${API_CODE}"
+echo "  Next.js: ${WEB_CODE}"
 
-if [ "$HTTP_CODE" = "200" ]; then
+if [ "$API_CODE" = "200" ] && [ "$WEB_CODE" = "200" ]; then
     echo ""
     echo "=========================================="
     echo " ✅ DEPLOY BERHASIL!"
     echo "=========================================="
-    echo ""
     echo " Website:  http://${DOMAIN}"
     echo " Admin:    http://${DOMAIN}/login"
-    echo " Service:  systemctl status ${SERVICE_NAME}"
-    echo " Logs:     journalctl -u ${SERVICE_NAME} -f"
+    echo " Services: systemctl status ${SERVICE_NAME} ${WEB_SERVICE_NAME}"
+    echo " Logs:     journalctl -u ${WEB_SERVICE_NAME} -f"
     echo ""
-    echo " ⚠️  PENTING:"
-    echo " 1. Login ke aaPanel → Website → ${DOMAIN} → SSL"
-    echo "    → Apply Let's Encrypt untuk HTTPS"
+    echo " ⚠️  Catatan:"
+    echo " 1. File Nginx ini menimpa config lama — kalau SSL Let's Encrypt"
+    echo "    sudah aktif, apply ulang lewat aaPanel → SSL setelah deploy."
     echo " 2. Ganti password admin default setelah login!"
     echo ""
 else
-    echo ""
-    echo " ⚠️  HTTP test returned ${HTTP_CODE}"
-    echo " Check: journalctl -u ${SERVICE_NAME} -n 30"
-    echo ""
+    echo " ⚠️ Ada service yang belum sehat. Cek: journalctl -u ${WEB_SERVICE_NAME} -n 30"
 fi

@@ -37,6 +37,17 @@ func main() {
 	os.MkdirAll("uploads", 0755)
 	mux.Handle("GET /uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads"))))
 
+	// JSON API for the Next.js frontend
+	mux.HandleFunc("GET /api/portal", h.APIPortal)
+	mux.HandleFunc("POST /api/orders", h.APIOrderCreate)
+	mux.HandleFunc("POST /api/auth/login", h.APILogin)
+	mux.HandleFunc("POST /api/auth/logout", h.APILogout)
+	mux.HandleFunc("GET /api/auth/me", h.APIMe)
+	mux.HandleFunc("GET /api/admin/orders", h.APIAdminOrders)
+	mux.HandleFunc("GET /api/admin/orders/{id}", h.AdminOrderShow)
+	mux.HandleFunc("POST /api/admin/orders/{id}/status", h.APIAdminOrderStatus)
+	mux.HandleFunc("POST /api/admin/orders/{id}/delete", h.APIAdminOrderDelete)
+
 	// Public portal
 	mux.HandleFunc("GET /{$}", h.PortalIndex)
 	mux.HandleFunc("GET /api/events", h.PortalEvents)
