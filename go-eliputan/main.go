@@ -1,7 +1,6 @@
 package main
 
 import (
-	"embed"
 	"log"
 	"net/http"
 	"os"
@@ -11,12 +10,6 @@ import (
 	"eliputan/internal/middleware"
 )
 
-//go:embed templates/*
-var templateFS embed.FS
-
-//go:embed static/*
-var staticFS embed.FS
-
 func main() {
 	port := envOr("PORT", "8000")
 
@@ -25,13 +18,9 @@ func main() {
 	db.Migrate(database)
 	db.Seed(database)
 
-	handler.SetTemplateFS(templateFS)
-	h := handler.New(database, templateFS)
+	h := handler.New(database)
 
 	mux := http.NewServeMux()
-
-	// Static files
-	mux.Handle("GET /static/", http.FileServerFS(staticFS))
 
 	// Uploaded files
 	os.MkdirAll("uploads", 0755)
@@ -43,27 +32,11 @@ func main() {
 	mux.HandleFunc("POST /api/auth/login", h.APILogin)
 	mux.HandleFunc("POST /api/auth/logout", h.APILogout)
 	mux.HandleFunc("GET /api/auth/me", h.APIMe)
+	mux.HandleFunc("GET /api/events", h.PortalEvents)
 	mux.HandleFunc("GET /api/admin/orders", h.APIAdminOrders)
 	mux.HandleFunc("GET /api/admin/orders/{id}", h.AdminOrderShow)
 	mux.HandleFunc("POST /api/admin/orders/{id}/status", h.APIAdminOrderStatus)
 	mux.HandleFunc("POST /api/admin/orders/{id}/delete", h.APIAdminOrderDelete)
-
-	// Public portal
-	mux.HandleFunc("GET /{$}", h.PortalIndex)
-	mux.HandleFunc("GET /api/events", h.PortalEvents)
-	mux.HandleFunc("POST /pesan", h.PortalStore)
-
-	// Auth
-	mux.HandleFunc("GET /login", h.LoginPage)
-	mux.HandleFunc("POST /login", h.LoginPost)
-	mux.HandleFunc("POST /logout", h.Logout)
-
-	// Admin (auth required)
-	mux.HandleFunc("GET /admin", h.AdminRedirect)
-	mux.HandleFunc("GET /admin/orders", h.AdminOrders)
-	mux.HandleFunc("GET /admin/orders/{id}", h.AdminOrderShow)
-	mux.HandleFunc("POST /admin/orders/{id}/status", h.AdminOrderStatus)
-	mux.HandleFunc("POST /admin/orders/{id}/delete", h.AdminOrderDelete)
 
 	wrapped := middleware.Logger(
 		middleware.Session(database,

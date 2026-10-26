@@ -92,15 +92,9 @@ go-eliputan/
 ├── main.go                     # Entry point, routing, .env loader
 ├── internal/
 │   ├── db/db.go               # Database: open, migrate, seed, helpers
-│   ├── handler/handler.go     # HTTP handlers (portal, auth, admin)
+│   ├── handler/handler.go     # HTTP handlers (events, admin detail, WhatsApp)
+│   ├── handler/api.go         # JSON API untuk frontend Next.js
 │   └── middleware/middleware.go # Logger, CSRF, session, security headers, rate limit
-├── templates/
-│   ├── layout.html            # Base layout (header, footer, dark mode)
-│   ├── portal.html            # Public portal + calendar + form
-│   ├── login.html             # Admin login
-│   └── admin.html             # Admin dashboard + approval modal
-├── static/
-│   └── style.css              # Placeholder
 ├── uploads/                   # User uploaded files (gitignored)
 ├── .env                       # Configuration (gitignored)
 ├── .env.example               # Template
