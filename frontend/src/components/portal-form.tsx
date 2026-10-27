@@ -179,7 +179,7 @@ export function PortalForm({ data, initialDate, bookedDates, onClose, onSubmitte
               name="nama_kegiatan"
               required
               autoFocus
-              placeholder="Contoh: Rapat Dengar Pendapat Komisi II"
+              placeholder="Tulis nama kegiatan yang akan diliput"
               className={fieldClass}
             />
           </div>
@@ -330,7 +330,6 @@ export function PortalForm({ data, initialDate, bookedDates, onClose, onSubmitte
                 id="nama_pemohon"
                 name="nama_pemohon"
                 required
-                placeholder="Contoh: H. Rusdi Alam, M.Si"
                 className={fieldClass}
               />
             </div>
