@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -334,26 +335,54 @@ func sendWhatsAppGateway(noWA, message string) bool {
 		log.Printf("[WhatsApp Gateway] WA_GATEWAY_TOKEN is not set in .env. Skipping automated WhatsApp sending.")
 		return false
 	}
+	provider := strings.ToLower(os.Getenv("WA_GATEWAY_PROVIDER"))
+	if provider == "" {
+		provider = "lanzz"
+	}
+
 	endpoint := os.Getenv("WA_GATEWAY_ENDPOINT")
-	if endpoint == "" {
-		endpoint = "https://api.fonnte.com/send"
-	}
 	target := db.FormatPhoneNumber(noWA)
-	log.Printf("[WhatsApp Gateway] Sending notification to %s...", target)
+	log.Printf("[WhatsApp Gateway (%s)] Sending notification to %s...", provider, target)
 
-	client := &http.Client{Timeout: 6 * time.Second}
-	form := url.Values{}
-	form.Set("target", target)
-	form.Set("message", message)
-	form.Set("countryCode", "62")
+	client := &http.Client{Timeout: 8 * time.Second}
+	var req *http.Request
+	var err error
 
-	req, err := http.NewRequest("POST", endpoint, strings.NewReader(form.Encode()))
-	if err != nil {
-		log.Printf("[WhatsApp Gateway] Error creating request: %v", err)
-		return false
+	if provider == "fonnte" {
+		if endpoint == "" {
+			endpoint = "https://api.fonnte.com/send"
+		}
+		form := url.Values{}
+		form.Set("target", target)
+		form.Set("message", message)
+		form.Set("countryCode", "62")
+
+		req, err = http.NewRequest("POST", endpoint, strings.NewReader(form.Encode()))
+		if err != nil {
+			log.Printf("[WhatsApp Gateway] Error creating request: %v", err)
+			return false
+		}
+		req.Header.Set("Authorization", token)
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	} else {
+		// Default: Lanzz WA Gate
+		if endpoint == "" {
+			endpoint = "https://api.wagate.lanzznet.me/api/send/text"
+		}
+		payload := map[string]string{
+			"to":      target,
+			"message": message,
+		}
+		jsonBytes, _ := json.Marshal(payload)
+
+		req, err = http.NewRequest("POST", endpoint, bytes.NewReader(jsonBytes))
+		if err != nil {
+			log.Printf("[WhatsApp Gateway] Error creating request: %v", err)
+			return false
+		}
+		req.Header.Set("x-api-key", token)
+		req.Header.Set("Content-Type", "application/json")
 	}
-	req.Header.Set("Authorization", token)
-	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)
 	if err != nil {
