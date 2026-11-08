@@ -19,6 +19,21 @@ export default function AdminOrdersPage() {
   const [status, setStatus] = useState("all");
   const [tanggal, setTanggal] = useState("");
   const [page, setPage] = useState(1);
+  const [sendingReminderId, setSendingReminderId] = useState<number | null>(null);
+
+  async function handleSendReminder(id: number, nama: string) {
+    if (!window.confirm(`Kirim pengingat WhatsApp sekarang ke pemohon "${nama}"?`)) return;
+    setSendingReminderId(id);
+    try {
+      const res = await api.sendReminder(id);
+      setNotice(res.message || `Pengingat berhasil dikirim ke ${nama}!`);
+      load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal mengirim pengingat.");
+    } finally {
+      setSendingReminderId(null);
+    }
+  }
 
   useEffect(() => {
     ensureCsrf()
@@ -266,13 +281,26 @@ export default function AdminOrdersPage() {
                       <StatusPill status={o.Status} label={o.StatusLabel} />
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap text-right">
-                      <button
-                        type="button"
-                        onClick={() => setOpenId(o.ID)}
-                        className="px-2.5 py-1.5 rounded-lg bg-brand hover:brightness-110 text-white text-xs font-medium transition"
-                      >
-                        Verifikasi
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {o.Status === "approved" && (
+                          <button
+                            type="button"
+                            onClick={() => handleSendReminder(o.ID, o.NamaPemohon)}
+                            disabled={sendingReminderId === o.ID}
+                            className="px-2.5 py-1.5 rounded-lg border border-emerald-500/30 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20 text-xs font-semibold transition flex items-center gap-1.5 disabled:opacity-60"
+                            title="Kirim pesan pengingat WhatsApp ke pemohon sekarang"
+                          >
+                            <span>🔔 {sendingReminderId === o.ID ? "Mengirim..." : "Kirim Pengingat"}</span>
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setOpenId(o.ID)}
+                          className="px-2.5 py-1.5 rounded-lg bg-brand hover:brightness-110 text-white text-xs font-medium transition"
+                        >
+                          Verifikasi
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

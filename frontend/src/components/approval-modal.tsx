@@ -62,6 +62,14 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
     setSendingReminder(true);
     setReminderMsg("");
     try {
+      if (status === "approved" && detail?.order.Status !== "approved") {
+        const form = new FormData();
+        form.set("status", status);
+        form.set("waktu_disetujui", waktu);
+        form.set("catatan_admin", catatan);
+        form.set("reminder_hours", String(reminderHours));
+        await api.updateStatus(id, form);
+      }
       const res = await api.sendReminder(id);
       setReminderSent(true);
       setReminderMsg(res.message || "Pengingat berhasil dikirim!");
