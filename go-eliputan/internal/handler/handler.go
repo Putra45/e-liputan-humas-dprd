@@ -367,7 +367,7 @@ func sendWhatsAppGateway(noWA, message string) bool {
 	} else {
 		// Default: Lanzz WA Gate
 		if endpoint == "" {
-			endpoint = "https://api.wagate.lanzznet.me/api/send/text"
+			endpoint = "https://api.wagate.lanzznet.me/api/send"
 		}
 		payload := map[string]string{
 			"to":      target,
