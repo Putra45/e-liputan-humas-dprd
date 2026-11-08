@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -262,6 +264,7 @@ func buildManualWALink(kode, nama, fraksi, kegiatan, kategori, tanggal, waktu, j
 func sendWhatsAppGateway(noWA, message string) bool {
 	token := os.Getenv("WA_GATEWAY_TOKEN")
 	if token == "" {
+		log.Printf("[WhatsApp Gateway] WA_GATEWAY_TOKEN is not set in .env. Skipping automated WhatsApp sending.")
 		return false
 	}
 	endpoint := os.Getenv("WA_GATEWAY_ENDPOINT")
@@ -269,6 +272,7 @@ func sendWhatsAppGateway(noWA, message string) bool {
 		endpoint = "https://api.fonnte.com/send"
 	}
 	target := db.FormatPhoneNumber(noWA)
+	log.Printf("[WhatsApp Gateway] Sending notification to %s...", target)
 
 	client := &http.Client{Timeout: 6 * time.Second}
 	form := url.Values{}
@@ -278,6 +282,7 @@ func sendWhatsAppGateway(noWA, message string) bool {
 
 	req, err := http.NewRequest("POST", endpoint, strings.NewReader(form.Encode()))
 	if err != nil {
+		log.Printf("[WhatsApp Gateway] Error creating request: %v", err)
 		return false
 	}
 	req.Header.Set("Authorization", token)
@@ -285,8 +290,11 @@ func sendWhatsAppGateway(noWA, message string) bool {
 
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Printf("[WhatsApp Gateway] Error sending request: %v", err)
 		return false
 	}
 	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	log.Printf("[WhatsApp Gateway] Server response (%d): %s", resp.StatusCode, string(body))
 	return resp.StatusCode >= 200 && resp.StatusCode < 300
 }

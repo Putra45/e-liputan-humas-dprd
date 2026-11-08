@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	port := envOr("PORT", "8000")
+	port := envOr("PORT", "8080")
 
 	database := db.Open(envOr("DB_PATH", "eliputan.db"))
 	defer database.Close()
