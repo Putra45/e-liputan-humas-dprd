@@ -260,6 +260,50 @@ func buildWAMessage(kode, nama, fraksi, kegiatan, kategori, tanggal, waktu, jeni
 	return msg.String()
 }
 
+func formatTimeRemaining(tanggal, waktu string, defaultHours int) string {
+	targetDateStr := tanggal
+	if len(targetDateStr) > 10 {
+		targetDateStr = targetDateStr[:10]
+	}
+	timeStr := waktu
+	if len(timeStr) == 5 {
+		timeStr += ":00"
+	}
+
+	loc := time.Local
+	eventTime, err := time.ParseInLocation("2006-01-02 15:04:05", fmt.Sprintf("%s %s", targetDateStr, timeStr), loc)
+	if err != nil {
+		eventTime, err = time.ParseInLocation("2006-01-02 15:04", fmt.Sprintf("%s %s", targetDateStr, waktu), loc)
+		if err != nil {
+			if defaultHours >= 24 {
+				return fmt.Sprintf("H-%d Hari", defaultHours/24)
+			}
+			return fmt.Sprintf("%d Jam Sebelum Acara", defaultHours)
+		}
+	}
+
+	diff := eventTime.Sub(time.Now())
+	if diff <= 0 {
+		return "Acara Berlangsung Hari Ini"
+	}
+
+	hoursTotal := int(diff.Hours())
+	if hoursTotal >= 48 {
+		days := (hoursTotal + 12) / 24
+		return fmt.Sprintf("Acara dalam %d Hari Lagi", days)
+	} else if hoursTotal >= 20 {
+		return "Acara Besok (H-1)"
+	} else if hoursTotal >= 1 {
+		return fmt.Sprintf("Acara dalam %d Jam Lagi", hoursTotal)
+	} else {
+		minutes := int(diff.Minutes())
+		if minutes <= 1 {
+			return "Acara Segera Dimulai"
+		}
+		return fmt.Sprintf("Acara dalam %d Menit Lagi", minutes)
+	}
+}
+
 func buildReminderWAMessage(kode, nama, fraksi, kegiatan, kategori, tanggal, waktu string, hours int) string {
 	t, _ := time.Parse("2006-01-02", tanggal[:10])
 	tanggalF := formatIndonesianDate(t)
@@ -269,19 +313,7 @@ func buildReminderWAMessage(kode, nama, fraksi, kegiatan, kategori, tanggal, wak
 		sapaan = fmt.Sprintf("Yth. *%s* (%s)", nama, fraksi)
 	}
 
-	label := "H-1 Hari"
-	if hours == 12 {
-		label = "12 Jam Sebelum Acara"
-	} else if hours == 8 {
-		label = "8 Jam Sebelum Acara"
-	} else if hours == 3 {
-		label = "3 Jam Sebelum Acara"
-	} else if hours == 1 {
-		label = "1 Jam Sebelum Acara"
-	} else if hours >= 24 {
-		days := hours / 24
-		label = fmt.Sprintf("H-%d Hari", days)
-	}
+	label := formatTimeRemaining(tanggal, waktu, hours)
 
 	var msg strings.Builder
 	msg.WriteString("⏰ *PENGINGAT JADWAL LIPUTAN (REMINDER)*\n")
