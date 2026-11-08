@@ -29,17 +29,20 @@ func checkAndSendReminders(database *sql.DB) {
 	if err != nil {
 		return
 	}
-	defer rows.Close()
+
+	var targets []MediaOrder
+	for rows.Next() {
+		var o MediaOrder
+		if err := rows.Scan(&o.ID, &o.KodeBooking, &o.NamaPemohon, &o.Fraksi, &o.NoWhatsapp, &o.NamaKegiatan, &o.Kategori, &o.TanggalKegiatan, &o.WaktuMulai, &o.WaktuDisetujui, &o.JenisPublikasi, &o.ReminderHours); err == nil {
+			targets = append(targets, o)
+		}
+	}
+	rows.Close() // Lepaskan koneksi database segera agar tidak deadlock!
 
 	loc := time.Local
 	now := time.Now()
 
-	for rows.Next() {
-		var o MediaOrder
-		if err := rows.Scan(&o.ID, &o.KodeBooking, &o.NamaPemohon, &o.Fraksi, &o.NoWhatsapp, &o.NamaKegiatan, &o.Kategori, &o.TanggalKegiatan, &o.WaktuMulai, &o.WaktuDisetujui, &o.JenisPublikasi, &o.ReminderHours); err != nil {
-			continue
-		}
-
+	for _, o := range targets {
 		timeStr := o.WaktuFinal()
 		if len(timeStr) == 5 {
 			timeStr += ":00"

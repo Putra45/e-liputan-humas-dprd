@@ -16,7 +16,7 @@ func Open(path string) *sql.DB {
 	if err != nil {
 		log.Fatal("db open:", err)
 	}
-	db.SetMaxOpenConns(1)
+	db.SetMaxOpenConns(10)
 	return db
 }
 
