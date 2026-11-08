@@ -64,6 +64,8 @@ func Migrate(db *sql.DB) {
 			log.Fatal("migrate:", err)
 		}
 	}
+	db.Exec("ALTER TABLE media_orders ADD COLUMN reminder_hours INTEGER DEFAULT 24")
+	db.Exec("ALTER TABLE media_orders ADD COLUMN reminder_sent INTEGER DEFAULT 0")
 }
 
 func Seed(db *sql.DB) {

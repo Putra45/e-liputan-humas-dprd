@@ -19,6 +19,7 @@ func main() {
 	db.Seed(database)
 
 	h := handler.New(database)
+	handler.StartReminderWorker(database)
 
 	mux := http.NewServeMux()
 
@@ -36,6 +37,7 @@ func main() {
 	mux.HandleFunc("GET /api/admin/orders", h.APIAdminOrders)
 	mux.HandleFunc("GET /api/admin/orders/{id}", h.AdminOrderShow)
 	mux.HandleFunc("POST /api/admin/orders/{id}/status", h.APIAdminOrderStatus)
+	mux.HandleFunc("POST /api/admin/orders/{id}/reminder", h.APIAdminOrderReminder)
 	mux.HandleFunc("POST /api/admin/orders/{id}/delete", h.APIAdminOrderDelete)
 
 	wrapped := middleware.Logger(

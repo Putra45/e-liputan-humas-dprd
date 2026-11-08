@@ -39,6 +39,8 @@ type MediaOrder struct {
 	FileDokumen     sql.NullString
 	Status          string
 	CatatanAdmin    sql.NullString
+	ReminderHours   int
+	ReminderSent    int
 	CreatedAt       string
 	UpdatedAt       string
 }
@@ -143,8 +145,8 @@ func (h *Handler) AdminOrderShow(w http.ResponseWriter, r *http.Request) {
 
 	id := r.PathValue("id")
 	var o MediaOrder
-	err := h.db.QueryRow("SELECT id, kode_booking, nama_pemohon, fraksi, no_whatsapp, nama_kegiatan, kategori, tanggal_kegiatan, waktu_mulai, waktu_disetujui, jenis_publikasi, file_dokumen, status, catatan_admin, created_at, updated_at FROM media_orders WHERE id = ?", id).
-		Scan(&o.ID, &o.KodeBooking, &o.NamaPemohon, &o.Fraksi, &o.NoWhatsapp, &o.NamaKegiatan, &o.Kategori, &o.TanggalKegiatan, &o.WaktuMulai, &o.WaktuDisetujui, &o.JenisPublikasi, &o.FileDokumen, &o.Status, &o.CatatanAdmin, &o.CreatedAt, &o.UpdatedAt)
+	err := h.db.QueryRow("SELECT id, kode_booking, nama_pemohon, fraksi, no_whatsapp, nama_kegiatan, kategori, tanggal_kegiatan, waktu_mulai, waktu_disetujui, jenis_publikasi, file_dokumen, status, catatan_admin, COALESCE(reminder_hours, 24), COALESCE(reminder_sent, 0), created_at, updated_at FROM media_orders WHERE id = ?", id).
+		Scan(&o.ID, &o.KodeBooking, &o.NamaPemohon, &o.Fraksi, &o.NoWhatsapp, &o.NamaKegiatan, &o.Kategori, &o.TanggalKegiatan, &o.WaktuMulai, &o.WaktuDisetujui, &o.JenisPublikasi, &o.FileDokumen, &o.Status, &o.CatatanAdmin, &o.ReminderHours, &o.ReminderSent, &o.CreatedAt, &o.UpdatedAt)
 	if err != nil {
 		http.Error(w, "Not found", 404)
 		return
@@ -171,6 +173,8 @@ func (h *Handler) AdminOrderShow(w http.ResponseWriter, r *http.Request) {
 		"waktu_disetujui_formatted": waktuD,
 		"file_url":                  fileURL,
 		"manual_wa_link":            waLink,
+		"reminder_hours":            o.ReminderHours,
+		"reminder_sent":             o.ReminderSent == 1,
 	})
 }
 
@@ -252,6 +256,69 @@ func buildWAMessage(kode, nama, fraksi, kegiatan, kategori, tanggal, waktu, jeni
 		msg.WriteString(fmt.Sprintf("🗓 *Tanggal:* %s (%s WIB)\n", tanggalF, waktu))
 		msg.WriteString("\nTim Humas akan segera memverifikasi ketersediaan jadwal. Terima kasih.")
 	}
+	return msg.String()
+}
+
+func buildReminderWAMessage(kode, nama, fraksi, kegiatan, kategori, tanggal, waktu string, hours int) string {
+	t, _ := time.Parse("2006-01-02", tanggal[:10])
+	tanggalF := formatIndonesianDate(t)
+
+	sapaan := fmt.Sprintf("Yth. *%s*", nama)
+	if fraksi != "" && fraksi != "-" {
+		sapaan = fmt.Sprintf("Yth. *%s* (%s)", nama, fraksi)
+	}
+
+	label := "H-1 Hari"
+	if hours == 12 {
+		label = "12 Jam Sebelum Acara"
+	} else if hours == 8 {
+		label = "8 Jam Sebelum Acara"
+	} else if hours == 3 {
+		label = "3 Jam Sebelum Acara"
+	} else if hours == 1 {
+		label = "1 Jam Sebelum Acara"
+	} else if hours >= 24 {
+		days := hours / 24
+		label = fmt.Sprintf("H-%d Hari", days)
+	}
+
+	var msg strings.Builder
+	msg.WriteString("⏰ *PENGINGAT JADWAL LIPUTAN (REMINDER)*\n")
+	msg.WriteString("🏛 *TIM PUBLIKASI HUMAS DPRD KOTA TANGERANG*\n")
+	msg.WriteString("----------------------------------------\n")
+	msg.WriteString(sapaan + "\n\n")
+	msg.WriteString(fmt.Sprintf("Mengingatkan kembali (%s), Anda memiliki agenda peliputan yang telah dijadwalkan:\n\n", label))
+	msg.WriteString(fmt.Sprintf("📋 *Kode Booking:* %s\n", kode))
+	msg.WriteString(fmt.Sprintf("📌 *Kegiatan:* %s\n", kegiatan))
+	msg.WriteString(fmt.Sprintf("🏛 *Kategori:* %s\n", kategori))
+	msg.WriteString(fmt.Sprintf("🗓 *Hari/Tanggal:* %s\n", tanggalF))
+	msg.WriteString(fmt.Sprintf("⏰ *Waktu Liputan:* %s WIB\n\n", waktu))
+	msg.WriteString("Tim Liputan & Publikasi Humas DPRD Kota Tangerang akan hadir di lokasi sesuai jadwal di atas.\n")
+	msg.WriteString("Mohon dipastikan kesiapan tempat dan koordinasi di lapangan. Terima kasih.")
+	return msg.String()
+}
+
+func buildAdminAlertWAMessage(kode, nama, fraksi, kegiatan, kategori, tanggal, waktu, noWA string) string {
+	t, _ := time.Parse("2006-01-02", tanggal[:10])
+	tanggalF := formatIndonesianDate(t)
+
+	pemohon := nama
+	if fraksi != "" && fraksi != "-" {
+		pemohon = fmt.Sprintf("%s (%s)", nama, fraksi)
+	}
+
+	var msg strings.Builder
+	msg.WriteString("🔔 *NOTIFIKASI PERMOHONAN LIPUTAN BARU*\n")
+	msg.WriteString("🏛 *Humas & Protokol DPRD Kota Tangerang*\n")
+	msg.WriteString("----------------------------------------\n")
+	msg.WriteString("Ada permohonan peliputan baru yang perlu diverifikasi:\n\n")
+	msg.WriteString(fmt.Sprintf("📋 *Kode Booking:* %s\n", kode))
+	msg.WriteString(fmt.Sprintf("👤 *Pemohon:* %s\n", pemohon))
+	msg.WriteString(fmt.Sprintf("📌 *Kegiatan:* %s\n", kegiatan))
+	msg.WriteString(fmt.Sprintf("🏛 *Kategori:* %s\n", kategori))
+	msg.WriteString(fmt.Sprintf("🗓 *Jadwal:* %s (%s WIB)\n", tanggalF, waktu))
+	msg.WriteString(fmt.Sprintf("📱 *No. WhatsApp Pemohon:* %s\n\n", noWA))
+	msg.WriteString("Silakan buka Panel Admin E-Liputan untuk menyetujui / menolak agenda ini.")
 	return msg.String()
 }
 

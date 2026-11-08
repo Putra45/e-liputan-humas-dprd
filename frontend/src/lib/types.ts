@@ -32,6 +32,8 @@ export interface Order {
   FileDokumen: { String: string; Valid: boolean };
   Status: string;
   CatatanAdmin: { String: string; Valid: boolean };
+  ReminderHours: number;
+  ReminderSent: number;
   HasFile: boolean;
   FileURL: string;
   TanggalFormatted: string;
@@ -55,4 +57,6 @@ export interface OrderDetail {
   waktu_disetujui_formatted: string;
   file_url: string | null;
   manual_wa_link: string;
+  reminder_hours: number;
+  reminder_sent: boolean;
 }

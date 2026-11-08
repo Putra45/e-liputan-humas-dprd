@@ -65,6 +65,11 @@ export const api = {
       body: form,
     }),
 
+  sendReminder: (id: number) =>
+    jsonFetch<{ ok: boolean; message: string }>(`/api/admin/orders/${id}/reminder`, {
+      method: "POST",
+    }),
+
   deleteOrder: (id: number) =>
     jsonFetch<{ ok: boolean }>(`/api/admin/orders/${id}/delete`, { method: "POST" }),
 };

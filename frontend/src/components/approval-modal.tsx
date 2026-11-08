@@ -19,6 +19,10 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
   const [status, setStatus] = useState("pending");
   const [waktu, setWaktu] = useState("");
   const [catatan, setCatatan] = useState("");
+  const [reminderHours, setReminderHours] = useState<number>(24);
+  const [reminderSent, setReminderSent] = useState<boolean>(false);
+  const [sendingReminder, setSendingReminder] = useState(false);
+  const [reminderMsg, setReminderMsg] = useState("");
 
   useEffect(() => {
     api
@@ -28,6 +32,8 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
         setStatus(d.order.Status || "pending");
         setWaktu(d.waktu_disetujui_formatted || "");
         setCatatan(d.order.CatatanAdmin?.String || "");
+        setReminderHours(d.reminder_hours !== undefined ? d.reminder_hours : 24);
+        setReminderSent(!!d.reminder_sent);
       })
       .catch(() => setLoadError("Gagal mengambil data permohonan."));
   }, [id]);
@@ -40,6 +46,7 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
     form.set("status", status);
     form.set("waktu_disetujui", waktu);
     form.set("catatan_admin", catatan);
+    form.set("reminder_hours", String(reminderHours));
     try {
       await api.updateStatus(id, form);
       onSaved("Keputusan tersimpan dan notifikasi WhatsApp telah diproses.");
@@ -47,6 +54,21 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
       setFormError(err instanceof Error ? err.message : "Gagal menyimpan keputusan.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleInstantReminder() {
+    if (!window.confirm("Kirim pesan WhatsApp pengingat sekarang ke nomor pemohon?")) return;
+    setSendingReminder(true);
+    setReminderMsg("");
+    try {
+      const res = await api.sendReminder(id);
+      setReminderSent(true);
+      setReminderMsg(res.message || "Pengingat berhasil dikirim!");
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Gagal mengirim pengingat.");
+    } finally {
+      setSendingReminder(false);
     }
   }
 
@@ -204,6 +226,59 @@ export function ApprovalModal({ id, onClose, onSaved }: Props) {
                 className={`${inputClass} resize-none`}
               />
             </div>
+
+            {status === "approved" && (
+              <div className="rounded-lg border border-line bg-surface p-3.5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label htmlFor="reminder_hours" className="block text-xs font-semibold text-ink">
+                    ⏰ Pengingat Otomatis (WhatsApp)
+                  </label>
+                  {reminderSent ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      ✓ Sudah Terkirim
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                      ● Menunggu Jadwal
+                    </span>
+                  )}
+                </div>
+
+                <div>
+                  <select
+                    id="reminder_hours"
+                    value={reminderHours}
+                    onChange={(e) => setReminderHours(Number(e.target.value))}
+                    className={inputClass}
+                  >
+                    <option value={24}>H-1 Hari (24 Jam Sebelumnya)</option>
+                    <option value={12}>12 Jam Sebelum Acara</option>
+                    <option value={8}>8 Jam Sebelum Acara</option>
+                    <option value={3}>3 Jam Sebelum Acara</option>
+                    <option value={1}>1 Jam Sebelum Acara</option>
+                    <option value={0}>Nonaktifkan Pengingat</option>
+                  </select>
+                  <p className="mt-1 text-[11px] text-muted">
+                    Sistem otomatis mengirim WhatsApp pengingat ke pemohon sesuai waktu yang dipilih.
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-line flex items-center justify-between gap-2">
+                  <span className="text-xs text-muted">Kirim pengingat sekarang?</span>
+                  <button
+                    type="button"
+                    onClick={handleInstantReminder}
+                    disabled={sendingReminder || saving}
+                    className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white text-xs font-medium transition-colors"
+                  >
+                    {sendingReminder ? "Mengirim..." : "Kirim Pengingat Sekarang"}
+                  </button>
+                </div>
+                {reminderMsg && (
+                  <p className="text-xs text-emerald-600 font-medium">{reminderMsg}</p>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="px-5 py-3.5 border-t border-line space-y-2">

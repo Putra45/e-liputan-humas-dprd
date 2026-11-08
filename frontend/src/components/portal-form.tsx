@@ -102,26 +102,20 @@ export function PortalForm({ data, initialDate, bookedDates, onClose, onSubmitte
               </dd>
             </div>
           </dl>
-          <p className="text-xs text-muted leading-relaxed">
-            Simpan kode booking ini. Konfirmasi dan penyesuaian jadwal dikirim ke nomor WhatsApp yang kamu
-            daftarkan.
-          </p>
+          <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-800 dark:text-emerald-300 flex items-center gap-2.5">
+            <svg className="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span className="leading-relaxed">Notifikasi tanda terima telah otomatis dikirim ke nomor WhatsApp Anda. Simpan kode booking ini untuk verifikasi.</span>
+          </div>
         </div>
-        <div className="px-5 py-3.5 border-t border-line flex flex-wrap gap-2">
-          <a
-            href={success.waLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 min-w-[180px] text-center px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors"
-          >
-            Konfirmasi via WhatsApp
-          </a>
+        <div className="px-5 py-3.5 border-t border-line">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2.5 rounded-lg bg-surface-2 border border-line hover:border-line-strong text-ink-2 text-sm font-medium transition-colors"
+            className="w-full py-2.5 rounded-lg bg-brand hover:brightness-110 text-white text-sm font-semibold transition"
           >
-            Tutup
+            Selesai / Tutup
           </button>
         </div>
       </>

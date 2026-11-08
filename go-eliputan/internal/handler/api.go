@@ -72,7 +72,7 @@ func (h *Handler) APIPortal(w http.ResponseWriter, r *http.Request) {
 	h.db.QueryRow("SELECT COUNT(*) FROM media_orders WHERE tanggal_kegiatan = ? AND status = 'approved'",
 		time.Now().Format("2006-01-02")).Scan(&todayApproved)
 
-	rows, err := h.db.Query(`SELECT id, kode_booking, nama_pemohon, fraksi, no_whatsapp, nama_kegiatan, kategori, tanggal_kegiatan, waktu_mulai, waktu_disetujui, jenis_publikasi, file_dokumen, status, catatan_admin, created_at, updated_at
+	rows, err := h.db.Query(`SELECT id, kode_booking, nama_pemohon, fraksi, no_whatsapp, nama_kegiatan, kategori, tanggal_kegiatan, waktu_mulai, waktu_disetujui, jenis_publikasi, file_dokumen, status, catatan_admin, COALESCE(reminder_hours, 24), COALESCE(reminder_sent, 0), created_at, updated_at
 		FROM media_orders WHERE status IN ('approved','pending') AND tanggal_kegiatan >= ? ORDER BY tanggal_kegiatan ASC, waktu_mulai ASC LIMIT 25`,
 		time.Now().Format("2006-01-02"))
 	if err != nil {
@@ -84,7 +84,7 @@ func (h *Handler) APIPortal(w http.ResponseWriter, r *http.Request) {
 	upcoming := []orderDTO{}
 	for rows.Next() {
 		var o MediaOrder
-		rows.Scan(&o.ID, &o.KodeBooking, &o.NamaPemohon, &o.Fraksi, &o.NoWhatsapp, &o.NamaKegiatan, &o.Kategori, &o.TanggalKegiatan, &o.WaktuMulai, &o.WaktuDisetujui, &o.JenisPublikasi, &o.FileDokumen, &o.Status, &o.CatatanAdmin, &o.CreatedAt, &o.UpdatedAt)
+		rows.Scan(&o.ID, &o.KodeBooking, &o.NamaPemohon, &o.Fraksi, &o.NoWhatsapp, &o.NamaKegiatan, &o.Kategori, &o.TanggalKegiatan, &o.WaktuMulai, &o.WaktuDisetujui, &o.JenisPublikasi, &o.FileDokumen, &o.Status, &o.CatatanAdmin, &o.ReminderHours, &o.ReminderSent, &o.CreatedAt, &o.UpdatedAt)
 		upcoming = append(upcoming, toDTO(o))
 	}
 
@@ -200,6 +200,10 @@ func (h *Handler) APIOrderCreate(w http.ResponseWriter, r *http.Request) {
 	waLink := buildManualWALink(kode, namaPemohon, fraksi, namaKegiatan, kategori, tanggal, waktuMulai, jenisPublikasi, noWhatsapp, "pending", "")
 	sendWhatsAppGateway(noWhatsapp, buildWAMessage(kode, namaPemohon, fraksi, namaKegiatan, kategori, tanggal, waktuMulai, jenisPublikasi, "pending", ""))
 
+	if adminWA := os.Getenv("ADMIN_WHATSAPP"); adminWA != "" {
+		sendWhatsAppGateway(adminWA, buildAdminAlertWAMessage(kode, namaPemohon, fraksi, namaKegiatan, kategori, tanggal, waktuMulai, noWhatsapp))
+	}
+
 	writeJSON(w, 201, map[string]any{
 		"kode":     kode,
 		"kegiatan": namaKegiatan,
@@ -300,7 +304,7 @@ func (h *Handler) APIAdminOrders(w http.ResponseWriter, r *http.Request) {
 	var total int
 	h.db.QueryRow("SELECT COUNT(*) FROM media_orders WHERE "+whereStr, args...).Scan(&total)
 
-	rows, err := h.db.Query("SELECT id, kode_booking, nama_pemohon, fraksi, no_whatsapp, nama_kegiatan, kategori, tanggal_kegiatan, waktu_mulai, waktu_disetujui, jenis_publikasi, file_dokumen, status, catatan_admin, created_at, updated_at FROM media_orders WHERE "+whereStr+" ORDER BY tanggal_kegiatan DESC, id DESC LIMIT ? OFFSET ?",
+	rows, err := h.db.Query("SELECT id, kode_booking, nama_pemohon, fraksi, no_whatsapp, nama_kegiatan, kategori, tanggal_kegiatan, waktu_mulai, waktu_disetujui, jenis_publikasi, file_dokumen, status, catatan_admin, COALESCE(reminder_hours, 24), COALESCE(reminder_sent, 0), created_at, updated_at FROM media_orders WHERE "+whereStr+" ORDER BY tanggal_kegiatan DESC, id DESC LIMIT ? OFFSET ?",
 		append(args, limit, offset)...)
 	if err != nil {
 		jsonError(w, 500, "Gagal memuat data")
@@ -311,7 +315,7 @@ func (h *Handler) APIAdminOrders(w http.ResponseWriter, r *http.Request) {
 	orders := []orderDTO{}
 	for rows.Next() {
 		var o MediaOrder
-		rows.Scan(&o.ID, &o.KodeBooking, &o.NamaPemohon, &o.Fraksi, &o.NoWhatsapp, &o.NamaKegiatan, &o.Kategori, &o.TanggalKegiatan, &o.WaktuMulai, &o.WaktuDisetujui, &o.JenisPublikasi, &o.FileDokumen, &o.Status, &o.CatatanAdmin, &o.CreatedAt, &o.UpdatedAt)
+		rows.Scan(&o.ID, &o.KodeBooking, &o.NamaPemohon, &o.Fraksi, &o.NoWhatsapp, &o.NamaKegiatan, &o.Kategori, &o.TanggalKegiatan, &o.WaktuMulai, &o.WaktuDisetujui, &o.JenisPublikasi, &o.FileDokumen, &o.Status, &o.CatatanAdmin, &o.ReminderHours, &o.ReminderSent, &o.CreatedAt, &o.UpdatedAt)
 		orders = append(orders, toDTO(o))
 	}
 
@@ -352,9 +356,16 @@ func (h *Handler) APIAdminOrderStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	reminderHours := 24
+	if rh := r.FormValue("reminder_hours"); rh != "" {
+		if val, err := strconv.Atoi(rh); err == nil && val >= 0 {
+			reminderHours = val
+		}
+	}
+
 	var o MediaOrder
-	if err := h.db.QueryRow("SELECT id, kode_booking, nama_pemohon, fraksi, no_whatsapp, nama_kegiatan, kategori, tanggal_kegiatan, waktu_mulai, waktu_disetujui, jenis_publikasi, file_dokumen, status, catatan_admin, created_at, updated_at FROM media_orders WHERE id = ?", id).
-		Scan(&o.ID, &o.KodeBooking, &o.NamaPemohon, &o.Fraksi, &o.NoWhatsapp, &o.NamaKegiatan, &o.Kategori, &o.TanggalKegiatan, &o.WaktuMulai, &o.WaktuDisetujui, &o.JenisPublikasi, &o.FileDokumen, &o.Status, &o.CatatanAdmin, &o.CreatedAt, &o.UpdatedAt); err != nil {
+	if err := h.db.QueryRow("SELECT id, kode_booking, nama_pemohon, fraksi, no_whatsapp, nama_kegiatan, kategori, tanggal_kegiatan, waktu_mulai, waktu_disetujui, jenis_publikasi, file_dokumen, status, catatan_admin, COALESCE(reminder_hours, 24), COALESCE(reminder_sent, 0), created_at, updated_at FROM media_orders WHERE id = ?", id).
+		Scan(&o.ID, &o.KodeBooking, &o.NamaPemohon, &o.Fraksi, &o.NoWhatsapp, &o.NamaKegiatan, &o.Kategori, &o.TanggalKegiatan, &o.WaktuMulai, &o.WaktuDisetujui, &o.JenisPublikasi, &o.FileDokumen, &o.Status, &o.CatatanAdmin, &o.ReminderHours, &o.ReminderSent, &o.CreatedAt, &o.UpdatedAt); err != nil {
 		jsonError(w, 404, "Permohonan tidak ditemukan")
 		return
 	}
@@ -374,8 +385,8 @@ func (h *Handler) APIAdminOrderStatus(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if _, err := h.db.Exec("UPDATE media_orders SET status = ?, waktu_disetujui = ?, catatan_admin = ?, updated_at = ? WHERE id = ?",
-		status, waktuVal, catatanAdmin, time.Now(), id); err != nil {
+	if _, err := h.db.Exec("UPDATE media_orders SET status = ?, waktu_disetujui = ?, catatan_admin = ?, reminder_hours = ?, updated_at = ? WHERE id = ?",
+		status, waktuVal, catatanAdmin, reminderHours, time.Now(), id); err != nil {
 		jsonError(w, 500, "Gagal menyimpan perubahan")
 		return
 	}
@@ -388,6 +399,36 @@ func (h *Handler) APIAdminOrderStatus(w http.ResponseWriter, r *http.Request) {
 	sendWhatsAppGateway(o.NoWhatsapp, buildWAMessage(o.KodeBooking, o.NamaPemohon, o.Fraksi, o.NamaKegiatan, o.Kategori, o.TanggalKegiatan, waktuFinal, o.JenisPublikasi, status, catatanAdmin))
 
 	writeJSON(w, 200, map[string]any{"ok": true, "waLink": waLink})
+}
+
+// POST /api/admin/orders/{id}/reminder
+func (h *Handler) APIAdminOrderReminder(w http.ResponseWriter, r *http.Request) {
+	if _, ok := middleware.RequireAuth(r); !ok {
+		jsonError(w, 401, "Unauthorized")
+		return
+	}
+	id := r.PathValue("id")
+
+	var o MediaOrder
+	err := h.db.QueryRow("SELECT id, kode_booking, nama_pemohon, fraksi, no_whatsapp, nama_kegiatan, kategori, tanggal_kegiatan, waktu_mulai, waktu_disetujui, jenis_publikasi, file_dokumen, status, catatan_admin, COALESCE(reminder_hours, 24), COALESCE(reminder_sent, 0), created_at, updated_at FROM media_orders WHERE id = ?", id).
+		Scan(&o.ID, &o.KodeBooking, &o.NamaPemohon, &o.Fraksi, &o.NoWhatsapp, &o.NamaKegiatan, &o.Kategori, &o.TanggalKegiatan, &o.WaktuMulai, &o.WaktuDisetujui, &o.JenisPublikasi, &o.FileDokumen, &o.Status, &o.CatatanAdmin, &o.ReminderHours, &o.ReminderSent, &o.CreatedAt, &o.UpdatedAt)
+	if err != nil {
+		jsonError(w, 404, "Permohonan tidak ditemukan")
+		return
+	}
+	if o.Status != "approved" {
+		jsonError(w, 422, "Pengingat hanya dapat dikirim untuk permohonan yang sudah disetujui (ACC).")
+		return
+	}
+
+	msg := buildReminderWAMessage(o.KodeBooking, o.NamaPemohon, o.Fraksi, o.NamaKegiatan, o.Kategori, o.TanggalKegiatan, o.WaktuFinal(), o.ReminderHours)
+	ok := sendWhatsAppGateway(o.NoWhatsapp, msg)
+	if !ok {
+		jsonError(w, 500, "Gagal mengirim WhatsApp pengingat. Periksa koneksi gateway Fonnte.")
+		return
+	}
+	h.db.Exec("UPDATE media_orders SET reminder_sent = 1, updated_at = ? WHERE id = ?", time.Now(), id)
+	writeJSON(w, 200, map[string]any{"ok": true, "message": "Pengingat berhasil dikirim ke nomor pemohon."})
 }
 
 // POST /api/admin/orders/{id}/delete
